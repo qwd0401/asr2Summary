@@ -1,5 +1,7 @@
 # 🚀 MeetAssistant - Intelligent Meeting Assistant
 
+[![中文](https://img.shields.io/badge/README-中文-blue)](README.md) [![English](https://img.shields.io/badge/README-English-red)](README_EN.md)
+
 A Flask-based intelligent meeting assistant system that provides speech-to-text, meeting summarization, and data management capabilities. Supports professional summary templates for various meeting types, making meeting records more efficient and professional.
 
 ## ✨ Core Features
@@ -61,7 +63,7 @@ A Flask-based intelligent meeting assistant system that provides speech-to-text,
 
 1. **Clone Project**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/qwd0401/asr2Summary.git
    cd meetassistant
    ```
 
