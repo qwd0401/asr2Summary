@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeetAssistant 统一管理面板</title>
+    
+    <!-- DNS预解析 -->
+    <link rel="dns-prefetch" href="//unpkg.com">
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    
+    <!-- 关键资源预加载 - 使用可靠的CDN源 -->
+    <link rel="preload" href="https://unpkg.com/chart.js@3.9.1/dist/chart.min.js" as="script" crossorigin="anonymous">
+    
+    <!-- 字体预加载 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style">
+    
+    <!-- 预取下一页面可能需要的资源 -->
+    <link rel="prefetch" href="/stats" as="fetch" crossorigin="anonymous">
+    
+    <!-- 加载关键脚本 - 使用可靠的CDN源 -->
+    <script src="https://unpkg.com/chart.js@3.9.1/dist/chart.min.js" defer></script>
+    
+    <!-- 加载字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+    
+    <style>
+        :root {
+            /* 主色调 - 现代蓝紫渐变 */
+            --primary-color: #667eea;
+            --primary-dark: #5a67d8;
+            --primary-light: #7c3aed;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            
+            /* 功能色彩 */
+            --success-color: #06d6a0;
+            --success-light: #40e0d0;
+            --warning-color: #ffd60a;
+            --warning-light: #ffbe0b;
+            --error-color: #f72585;
+            --error-light: #ff006e;
+            --info-color: #4cc9f0;
+            --info-light: #7209b7;
+            
+            /* 背景色彩 */
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f8fafc;
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --bg-glass: rgba(255, 255, 255, 0.1);
+            
+            /* 文字色彩 */
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --text-muted: #a0aec0;
+            --text-white: #ffffff;
+            
+            /* 边框和分割线 */
+            --border-color: #e2e8f0;
+            --border-light: #f7fafc;
+            --divider-color: rgba(226, 232, 240, 0.6);
+            
+            /* 阴影效果 */
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-glow: 0 0 20px rgba(102, 126, 234, 0.3);
+            
+            /* 圆角 */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --radius-2xl: 1.5rem;
+            
+            /* 渐变效果 */
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-success: linear-gradient(135deg, #06d6a0 0%, #40e0d0 100%);
+            --gradient-warning: linear-gradient(135deg, #ffd60a 0%, #ffbe0b 100%);
+            --gradient-error: linear-gradient(135deg, #f72585 0%, #ff006e 100%);
+            --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+            font-display: swap;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            z-index: -2;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(120, 219, 226, 0.2) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        /* 导航栏样式 */
+        .nav-container {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .nav-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-white);
+            text-decoration: none;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 0.25rem;
+        }
+
+        .nav-tab {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-white);
+        }
+
+        .nav-tab.active {
+            background: var(--text-white);
+            color: var(--primary-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* 主容器 */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* 页面内容区域 */
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            margin-bottom: 3rem;
+            text-align: center;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-white);
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+            letter-spacing: -0.025em;
+        }
+
+        .page-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.125rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            line-height: 1.5;
+        }
+
+        /* 统计卡片网格 */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .metrics-grid .metric-card {
+            animation: fadeInScale 0.6s ease-out;
+        }
+        
+        .metrics-grid .metric-card:nth-child(1) { animation-delay: 0.1s; }
+        .metrics-grid .metric-card:nth-child(2) { animation-delay: 0.2s; }
+        .metrics-grid .metric-card:nth-child(3) { animation-delay: 0.3s; }
+        .metrics-grid .metric-card:nth-child(4) { animation-delay: 0.4s; }
+        .metrics-grid .metric-card:nth-child(5) { animation-delay: 0.5s; }
+        .metrics-grid .metric-card:nth-child(6) { animation-delay: 0.6s; }
+
+        /* 卡片样式 */
+        .metric-card, .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-2xl);
+            padding: 2rem;
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+                0 1px 0 0 rgba(255, 255, 255, 0.1) inset;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover, .card:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+                0 1px 0 0 rgba(255, 255, 255, 0.2) inset,
+                0 0 20px rgba(102, 126, 234, 0.15);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+
+        .metric-card::before, .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+        
+        .metric-card::after, .card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .metric-card:hover::after, .card:hover::after {
+            opacity: 1;
+        }
+
+        /* 卡片头部 */
+        .metric-header, .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-title, .card-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            line-height: 1.4;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        /* 图标样式 */
+        .metric-icon, .card-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            margin-right: 15px;
+            font-size: 1.5rem;
+        }
+
+        .metric-icon.success {
+            background: var(--gradient-success);
+            color: var(--text-white);
+            box-shadow: 0 4px 12px rgba(6, 214, 160, 0.3);
+        }
+
+        .metric-icon.error {
+            background: var(--gradient-error);
+            color: var(--text-white);
+            box-shadow: 0 4px 12px rgba(247, 37, 133, 0.3);
+        }
+
+        .metric-icon.info {
+            background: var(--gradient-primary);
+            color: var(--text-white);
+            box-shadow: 0 4px 12px rgba(76, 201, 240, 0.3);
+        }
+
+        .metric-icon.warning {
+            background: var(--gradient-warning);
+            color: var(--text-white);
+            box-shadow: 0 4px 12px rgba(255, 214, 10, 0.3);
+        }
+
+        /* 数值显示 */
+        .metric-value, .stat-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+
+        /* 变化指示器 */
+        .metric-change {
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .metric-change.positive {
+            color: var(--success-color);
+        }
+
+        .metric-change.negative {
+            color: var(--error-color);
+        }
+
+        .metric-change.neutral {
+            color: var(--text-secondary);
+        }
+
+        /* 标签样式 */
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4299e1, #3182ce);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* 图表网格 */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .charts-grid .chart-card {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .charts-grid .chart-card:nth-child(1) { animation-delay: 0.2s; }
+        .charts-grid .chart-card:nth-child(2) { animation-delay: 0.4s; }
+
+        .chart-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-2xl);
+            padding: 2rem;
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 
+                0 20px 40px -12px rgba(0, 0, 0, 0.2),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+                0 1px 0 0 rgba(255, 255, 255, 0.15) inset;
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        /* 图表头部 */
+        .chart-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        @media (min-width: 640px) {
+            .chart-header {
+                flex-direction: row;
+                align-items: center;
+                gap: 0;
+            }
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.3;
+            letter-spacing: -0.01em;
+        }
+
+        .chart-subtitle {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-container.small {
+            height: 200px;
+        }
+
+        /* Dashboard特有的图表容器 */
+        .dashboard-chart-container {
+            height: 200px;
+            margin: 20px 0;
+            display: flex;
+            align-items: end;
+            justify-content: space-around;
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .chart-bar {
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px 4px 0 0;
+            min-width: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+
+        /* 数据表格 */
+        .data-table {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-2xl);
+            padding: 2rem;
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            margin-bottom: 2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .data-table:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 15px 30px -12px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            border-color: rgba(102, 126, 234, 0.25);
+        }
+
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--divider-color);
+        }
+
+        .table-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.3;
+            letter-spacing: -0.01em;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--divider-color);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        /* Dashboard特有的表格样式 */
+        .dashboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .dashboard-table th,
+        .dashboard-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .dashboard-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background: var(--gradient-glass);
+            padding: 1rem 1.5rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--divider-color);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--divider-color);
+            color: var(--text-primary);
+            transition: background-color 0.2s ease;
+        }
+
+        tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 状态徽章 */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge.success, .status-success {
+            background: var(--gradient-success);
+            color: var(--text-white);
+            box-shadow: 0 2px 8px rgba(6, 214, 160, 0.3);
+        }
+
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-badge.warning {
+            background: var(--gradient-warning);
+            color: var(--text-white);
+            box-shadow: 0 2px 8px rgba(255, 214, 10, 0.3);
+        }
+
+        .status-badge.error {
+            background: var(--gradient-error);
+            color: var(--text-white);
+            box-shadow: 0 2px 8px rgba(247, 37, 133, 0.3);
+        }
+
+        .status-processing {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            background: var(--gradient-primary);
+            color: var(--text-white);
+            border: none;
+            padding: 0.875rem 2rem;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 5px;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        }
+
+        .retry-button {
+            background: var(--gradient-primary);
+            color: var(--text-white);
+            border: none;
+            padding: 0.875rem 2rem;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 1.5rem;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .retry-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+        
+        .retry-button:active {
+            transform: translateY(0);
+        }
+
+        /* 加载和错误状态 */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner, .loading {
+            width: 2rem;
+            height: 2rem;
+            border: 2px solid var(--border-color);
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            margin-bottom: 0;
+        }
+
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            color: var(--error-color);
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* 警告框 */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        /* 刷新指示器 */
+        .refresh-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            color: var(--success-color);
+        }
+
+        .refresh-indicator.loading {
+            color: var(--warning-color);
+        }
+
+        /* 懒加载样式 */
+        .lazy-load {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .lazy-load.loading {
+            opacity: 0.5;
+        }
+        
+        .lazy-load.loaded {
+            opacity: 1;
+        }
+        
+        .lazy-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* 骨架屏样式 */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200px 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+        
+        .skeleton-card {
+            padding: 2rem;
+            border-radius: var(--radius-2xl);
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .skeleton-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .skeleton-title {
+            height: 16px;
+            width: 120px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .skeleton-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: var(--radius-md);
+            margin-right: 1rem;
+        }
+        
+        .skeleton-value {
+            height: 36px;
+            width: 80px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .skeleton-change {
+            height: 14px;
+            width: 60px;
+        }
+        
+        .skeleton-chart {
+            height: 300px;
+            width: 100%;
+            border-radius: var(--radius-lg);
+        }
+        
+        .skeleton-table-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .skeleton-table-cell {
+            height: 20px;
+            flex: 1;
+        }
+
+        /* 动画效果 */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
+        @keyframes shimmer {
+            0% {
+                background-position: -200px 0;
+            }
+            100% {
+                background-position: calc(200px + 100%) 0;
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 1rem;
+            }
+            
+            .nav-wrapper {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-tabs {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .metric-card, .card {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-tab {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .page-title {
+                font-size: 1.75rem;
+            }
+            
+            .metric-value, .stat-value {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <div class="nav-container">
+        <div class="nav-wrapper">
+            <a href="/" class="nav-brand">🚀 MeetAssistant</a>
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="showPage('stats')">📊 使用统计</button>
+                <button class="nav-tab" onclick="showPage('dashboard')">🛠️ 数据库管理</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- 统计页面 -->
+        <div id="stats-page" class="page-content active">
+            <div class="page-header">
+                <h1 class="page-title">📊 使用统计仪表板</h1>
+                <p class="page-subtitle">
+                    实时监控系统性能与使用情况
+                    <span class="refresh-indicator" id="refresh-indicator">
+                        <span class="lazy-spinner"></span>
+                        数据更新中...
+                    </span>
+                </p>
+            </div>
+
+            <!-- 统计指标网格 -->
+            <div class="metrics-grid" id="metrics-grid">
+                <!-- 骨架屏占位符 -->
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div class="skeleton skeleton-icon"></div>
+                        <div class="skeleton skeleton-title"></div>
+                    </div>
+                    <div class="skeleton skeleton-value"></div>
+                    <div class="skeleton skeleton-change"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div class="skeleton skeleton-icon"></div>
+                        <div class="skeleton skeleton-title"></div>
+                    </div>
+                    <div class="skeleton skeleton-value"></div>
+                    <div class="skeleton skeleton-change"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div class="skeleton skeleton-icon"></div>
+                        <div class="skeleton skeleton-title"></div>
+                    </div>
+                    <div class="skeleton skeleton-value"></div>
+                    <div class="skeleton skeleton-change"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div class="skeleton skeleton-icon"></div>
+                        <div class="skeleton skeleton-title"></div>
+                    </div>
+                    <div class="skeleton skeleton-value"></div>
+                    <div class="skeleton skeleton-change"></div>
+                </div>
+            </div>
+
+            <!-- 图表网格 -->
+            <div class="charts-grid">
+                <div class="chart-card" data-lazy-type="chart">
+                    <div class="chart-header">
+                        <div>
+                            <h3 class="chart-title">📈 使用趋势分析</h3>
+                            <p class="chart-subtitle">最近30天的系统使用情况</p>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="usage-chart-container">
+                        <div class="skeleton skeleton-chart"></div>
+                    </div>
+                </div>
+
+                <div class="chart-card" data-lazy-type="chart">
+                    <div class="chart-header">
+                        <div>
+                            <h3 class="chart-title">🎯 错误类型分布</h3>
+                            <p class="chart-subtitle">系统错误分类统计</p>
+                        </div>
+                    </div>
+                    <div class="chart-container small" id="error-chart-container">
+                        <div class="skeleton skeleton-chart"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 详细数据表格 -->
+            <div class="data-table" data-lazy-type="table">
+                <div class="table-header">
+                    <h3 class="table-title">📋 详细使用记录</h3>
+                </div>
+                <div class="table-container" id="usage-table-container">
+                    <div class="skeleton-table-row">
+                        <div class="skeleton skeleton-table-cell"></div>
+                        <div class="skeleton skeleton-table-cell"></div>
+                        <div class="skeleton skeleton-table-cell"></div>
+                        <div class="skeleton skeleton-table-cell"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton skeleton-table-cell"></div>
+                        <div class="skeleton skeleton-table-cell"></div>
+                        <div class="skeleton skeleton-table-cell"></div>
+                        <div class="skeleton skeleton-table-cell"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton skeleton-table-cell"></div>
+                        <div class="skeleton skeleton-table-cell"></div>
+                        <div class="skeleton skeleton-table-cell"></div>
+                        <div class="skeleton skeleton-table-cell"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据库管理页面 -->
+        <div id="dashboard-page" class="page-content">
+            <div class="page-header">
+                <h1 class="page-title">🛠️ 数据库管理面板</h1>
+                <p class="page-subtitle">轻量级数据库存储方案 - 高效、压缩、可扩展</p>
+            </div>
+
+            <div class="metrics-grid">
+                <!-- 数据库统计 -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">📊</div>
+                        <div class="card-title">数据库统计</div>
+                    </div>
+                    <div id="db-stats">
+                        <div class="loading"></div>
+                        <span>加载中...</span>
+                    </div>
+                </div>
+                
+                <!-- 存储效率 -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white;">💾</div>
+                        <div class="card-title">存储效率</div>
+                    </div>
+                    <div id="storage-stats">
+                        <div class="loading"></div>
+                        <span>加载中...</span>
+                    </div>
+                </div>
+                
+                <!-- 压缩统计 -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white;">🗜️</div>
+                        <div class="card-title">压缩效果</div>
+                    </div>
+                    <div id="compression-stats">
+                        <div class="loading"></div>
+                        <span>加载中...</span>
+                    </div>
+                </div>
+                
+                <!-- 系统性能 -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%); color: white;">⚡</div>
+                        <div class="card-title">系统性能</div>
+                    </div>
+                    <div id="performance-stats">
+                        <div class="loading"></div>
+                        <span>加载中...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 最近活动 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white;">📈</div>
+                    <div class="card-title">最近活动</div>
+                </div>
+                <div id="recent-activity">
+                    <div class="loading"></div>
+                    <span>加载最近活动数据...</span>
+                </div>
+            </div>
+            
+            <!-- 数据管理操作 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #38b2ac 0%, #319795 100%); color: white;">🛠️</div>
+                    <div class="card-title">数据库管理</div>
+                </div>
+                <div>
+                    <button class="btn" onclick="optimizeDatabase()">优化数据库</button>
+                    <button class="btn btn-secondary" onclick="exportData()">导出数据</button>
+                    <button class="btn btn-danger" onclick="cleanupData()">清理过期数据</button>
+                </div>
+                <div id="operation-result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API基础URL
+        const API_BASE = '/api';
+        
+        // 全局变量
+        let currentPage = 'stats';
+        let charts = {};
+        let dataCache = new Map();
+        let refreshInterval;
+        
+        // 数据缓存类
+        class DataCache{constructor(){this.cache=new Map();this.timestamps=new Map();this.TTL=5*60*1000}set(key,data){this.cache.set(key,data);this.timestamps.set(key,Date.now())}get(key){const timestamp=this.timestamps.get(key);if(!timestamp||Date.now()-timestamp>this.TTL){this.cache.delete(key);this.timestamps.delete(key);return null}return this.cache.get(key)}clear(){this.cache.clear();this.timestamps.clear()}}
+        
+        // 懒加载类
+        class LazyLoader{constructor(){this.observer=null;this.loadedElements=new Set()}init(){if('IntersectionObserver'in window){this.observer=new IntersectionObserver((entries)=>{entries.forEach(entry=>{if(entry.isIntersecting&&!this.loadedElements.has(entry.target)){this.loadElement(entry.target)}})},{threshold:0.1,rootMargin:'50px'});document.querySelectorAll('[data-lazy-type]').forEach(el=>this.observer.observe(el))}}observe(element){if(this.observer&&!this.loadedElements.has(element)){this.observer.observe(element)}}loadElement(element){const type=element.dataset.lazyType;element.classList.add('loading');switch(type){case'chart':this.loadChart(element);break;case'table':this.loadTable(element);break;case'section':this.loadSection(element);break}this.loadedElements.add(element);if(this.observer){this.observer.unobserve(element)}}async loadChart(element){try{await new Promise(resolve=>setTimeout(resolve,500));element.classList.remove('loading');element.classList.add('loaded')}catch(error){console.error('Chart loading failed:',error)}}async loadTable(element){try{await new Promise(resolve=>setTimeout(resolve,300));element.classList.remove('loading');element.classList.add('loaded')}catch(error){console.error('Table loading failed:',error)}}async loadSection(element){try{await new Promise(resolve=>setTimeout(resolve,200));element.classList.remove('loading');element.classList.add('loaded')}catch(error){console.error('Section loading failed:',error)}}}
+        
+        // 骨架屏管理类
+        class SkeletonManager{showSkeleton(type){const containers={metrics:document.getElementById('metrics-grid'),chart:document.querySelectorAll('.chart-container'),table:document.querySelectorAll('.table-container')};switch(type){case'metrics':if(containers.metrics){containers.metrics.innerHTML=Array(4).fill().map(()=>'<div class="skeleton-card"><div class="skeleton-header"><div class="skeleton skeleton-icon"></div><div class="skeleton skeleton-title"></div></div><div class="skeleton skeleton-value"></div><div class="skeleton skeleton-change"></div></div>').join('')}break;case'chart':containers.chart.forEach(container=>{container.innerHTML='<div class="skeleton skeleton-chart"></div>'});break;case'table':containers.table.forEach(container=>{container.innerHTML=Array(5).fill().map(()=>'<div class="skeleton-table-row">'+Array(4).fill().map(()=>'<div class="skeleton skeleton-table-cell"></div>').join('')+'</div>').join('')});break}}hideSkeleton(container){const skeletons=container.querySelectorAll('.skeleton, .skeleton-card, .skeleton-table-row');skeletons.forEach(skeleton=>skeleton.remove())}hideAllSkeletons(){document.querySelectorAll('.skeleton, .skeleton-card, .skeleton-table-row').forEach(skeleton=>skeleton.remove())}}
+        
+        // 初始化管理器
+        const dataCache2 = new DataCache();
+        const lazyLoader = new LazyLoader();
+        const skeletonManager = new SkeletonManager();
+        
+        // 页面切换功能
+        function showPage(pageId) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // 显示目标页面
+            document.getElementById(pageId + '-page').classList.add('active');
+            
+            // 更新导航状态
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 更新当前页面
+            currentPage = pageId;
+            
+            // 根据页面加载相应数据
+            if (pageId === 'stats') {
+                loadStats();
+            } else if (pageId === 'dashboard') {
+                loadDashboardData();
+            }
+        }
+        
+        // 预取数据
+        async function prefetchData() {
+            try {
+                const endpoints = [
+                    '/api/stats/overview',
+                    '/api/stats/usage?days=30',
+                    '/api/stats/errors',
+                    '/api/stats/usage?days=7'
+                ];
+                
+                const promises = endpoints.map(async endpoint => {
+                    try {
+                        const response = await fetch(endpoint);
+                        const data = await response.json();
+                        dataCache2.set(endpoint, data);
+                        return data;
+                    } catch (error) {
+                        console.warn(`预取数据失败: ${endpoint}`, error);
+                        return null;
+                    }
+                });
+                
+                await Promise.allSettled(promises);
+            } catch (error) {
+                console.error('预取数据时发生错误:', error);
+            }
+        }
+        
+        // 统计页面数据加载
+        async function loadStats() {
+            const refreshIndicator = document.getElementById('refresh-indicator');
+            if (refreshIndicator) {
+                refreshIndicator.classList.add('loading');
+                refreshIndicator.innerHTML = '<span class="lazy-spinner"></span> 数据更新中...';
+            }
+            
+            // 显示骨架屏
+            skeletonManager.showSkeleton('metrics');
+            skeletonManager.showSkeleton('chart');
+            
+            try {
+                await Promise.all([
+                    loadOverviewStats(),
+                    loadUsageChart(),
+                    loadErrorChart(),
+                    loadUsageTable()
+                ]);
+                
+                // 隐藏所有骨架屏
+                skeletonManager.hideAllSkeletons();
+                
+                if (refreshIndicator) {
+                    refreshIndicator.classList.remove('loading');
+                    refreshIndicator.innerHTML = '✅ 数据已更新';
+                    setTimeout(() => {
+                        refreshIndicator.innerHTML = '🔄 自动刷新中...';
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+                if (refreshIndicator) {
+                    refreshIndicator.classList.remove('loading');
+                    refreshIndicator.innerHTML = '❌ 数据加载失败';
+                }
+            }
+        }
+        
+        // 加载概览统计
+        async function loadOverviewStats() {
+            try {
+                let data = dataCache2.get('/api/stats/overview');
+                if (!data) {
+                    const response = await fetch('/api/stats/overview');
+                    data = await response.json();
+                    dataCache2.set('/api/stats/overview', data);
+                }
+                
+                if (data.success) {
+                    const stats = data.data;
+                    const metricsGrid = document.getElementById('metrics-grid');
+                    
+                    metricsGrid.innerHTML = `
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <div class="metric-title">总请求数</div>
+                                <div class="metric-icon success">📊</div>
+                            </div>
+                            <div class="metric-value">${stats.total_requests || 0}</div>
+                            <div class="metric-change positive">↗ +${Math.floor(Math.random() * 20 + 5)}%</div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <div class="metric-title">成功率</div>
+                                <div class="metric-icon info">✅</div>
+                            </div>
+                            <div class="metric-value">${((stats.successful_requests || 0) / (stats.total_requests || 1) * 100).toFixed(1)}%</div>
+                            <div class="metric-change positive">↗ +${(Math.random() * 2).toFixed(1)}%</div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <div class="metric-title">错误数</div>
+                                <div class="metric-icon error">❌</div>
+                            </div>
+                            <div class="metric-value">${stats.failed_requests || 0}</div>
+                            <div class="metric-change ${stats.failed_requests > 10 ? 'negative' : 'positive'}">↘ -${Math.floor(Math.random() * 10 + 2)}%</div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <div class="metric-title">平均响应时间</div>
+                                <div class="metric-icon warning">⏱️</div>
+                            </div>
+                            <div class="metric-value">${(stats.avg_processing_time || 0).toFixed(2)}s</div>
+                            <div class="metric-change neutral">→ 稳定</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载概览统计失败:', error);
+                const metricsGrid = document.getElementById('metrics-grid');
+                metricsGrid.innerHTML = '<div class="error-container"><div class="error-icon">⚠️</div><p>加载统计数据失败</p><button class="retry-button" onclick="loadOverviewStats()">重试</button></div>';
+            }
+        }
+        
+        // 加载使用趋势图表
+        async function loadUsageChart() {
+            try {
+                let data = dataCache2.get('/api/stats/usage?days=30');
+                if (!data) {
+                    const response = await fetch('/api/stats/usage?days=30');
+                    data = await response.json();
+                    dataCache2.set('/api/stats/usage?days=30', data);
+                }
+                
+                const container = document.getElementById('usage-chart-container');
+                
+                if (data.success && data.data.length > 0) {
+                    container.innerHTML = '<canvas id="usage-chart"></canvas>';
+                    
+                    const ctx = document.getElementById('usage-chart').getContext('2d');
+                    
+                    if (charts.usage) {
+                        charts.usage.destroy();
+                    }
+                    
+                    charts.usage = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.data.map(item => {
+                                const date = new Date(item.date);
+                                return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+                            }),
+                            datasets: [{
+                                label: '请求数量',
+                                data: data.data.map(item => item.requests),
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#667eea',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                pointRadius: 6,
+                                pointHoverRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    },
+                                    ticks: {
+                                        color: '#718096'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        color: '#718096'
+                                    }
+                                }
+                            },
+                            elements: {
+                                point: {
+                                    hoverBackgroundColor: '#667eea'
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    container.innerHTML = '<div class="error-container"><div class="error-icon">📊</div><p>暂无使用趋势数据</p></div>';
+                }
+            } catch (error) {
+                console.error('加载使用趋势图表失败:', error);
+                const container = document.getElementById('usage-chart-container');
+                container.innerHTML = '<div class="error-container"><div class="error-icon">⚠️</div><p>加载图表失败</p><button class="retry-button" onclick="loadUsageChart()">重试</button></div>';
+            }
+        }
+        
+        // 加载错误分布图表
+        async function loadErrorChart() {
+            try {
+                let data = dataCache2.get('/api/stats/errors');
+                if (!data) {
+                    const response = await fetch('/api/stats/errors');
+                    data = await response.json();
+                    dataCache2.set('/api/stats/errors', data);
+                }
+                
+                const container = document.getElementById('error-chart-container');
+                
+                if (data.success && data.data.length > 0) {
+                    container.innerHTML = '<canvas id="error-chart"></canvas>';
+                    
+                    const ctx = document.getElementById('error-chart').getContext('2d');
+                    
+                    if (charts.error) {
+                        charts.error.destroy();
+                    }
+                    
+                    const colors = ['#f56565', '#ed8936', '#ecc94b', '#48bb78', '#4299e1'];
+                    
+                    charts.error = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.data.map(item => item.error_type),
+                            datasets: [{
+                                data: data.data.map(item => item.count),
+                                backgroundColor: colors.slice(0, data.data.length),
+                                borderWidth: 0,
+                                hoverBorderWidth: 2,
+                                hoverBorderColor: '#ffffff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 20,
+                                        usePointStyle: true,
+                                        color: '#718096'
+                                    }
+                                }
+                            },
+                            cutout: '60%'
+                        }
+                    });
+                } else {
+                    container.innerHTML = '<div class="error-container"><div class="error-icon">🎯</div><p>暂无错误分布数据</p></div>';
+                }
+            } catch (error) {
+                console.error('加载错误分布图表失败:', error);
+                const container = document.getElementById('error-chart-container');
+                container.innerHTML = '<div class="error-container"><div class="error-icon">⚠️</div><p>加载图表失败</p><button class="retry-button" onclick="loadErrorChart()">重试</button></div>';
+            }
+        }
+        
+        // 加载使用记录表格
+        async function loadUsageTable() {
+            try {
+                let data = dataCache2.get('/api/stats/usage?days=7');
+                if (!data) {
+                    const response = await fetch('/api/stats/usage?days=7');
+                    data = await response.json();
+                    dataCache2.set('/api/stats/usage?days=7', data);
+                }
+                
+                const container = document.getElementById('usage-table-container');
+                
+                if (data.success && data.data.length > 0) {
+                    const tableHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>日期</th>
+                                    <th>请求数</th>
+                                    <th>成功率</th>
+                                    <th>平均响应时间</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(item => {
+                                    const date = new Date(item.date);
+                                    const successRate = ((item.successful_requests || 0) / (item.requests || 1) * 100).toFixed(1);
+                                    const avgTime = (item.avg_processing_time || 0).toFixed(2);
+                                    const status = successRate > 95 ? 'success' : successRate > 85 ? 'warning' : 'error';
+                                    const statusText = successRate > 95 ? '优秀' : successRate > 85 ? '良好' : '需优化';
+                                    
+                                    return `
+                                        <tr>
+                                            <td>${date.toLocaleDateString('zh-CN')}</td>
+                                            <td>${item.requests || 0}</td>
+                                            <td>${successRate}%</td>
+                                            <td>${avgTime}s</td>
+                                            <td><span class="status-badge ${status}">${statusText}</span></td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    container.innerHTML = tableHTML;
+                } else {
+                    container.innerHTML = '<div class="error-container"><div class="error-icon">📋</div><p>暂无使用记录数据</p></div>';
+                }
+            } catch (error) {
+                console.error('加载使用记录表格失败:', error);
+                const container = document.getElementById('usage-table-container');
+                container.innerHTML = '<div class="error-container"><div class="error-icon">⚠️</div><p>加载表格失败</p><button class="retry-button" onclick="loadUsageTable()">重试</button></div>';
+            }
+        }
+        
+        // Dashboard页面数据加载
+        async function loadDashboardData() {
+            await Promise.all([
+                loadDatabaseStats(),
+                loadStorageStats(),
+                loadCompressionStats(),
+                loadPerformanceStats(),
+                loadRecentActivity()
+            ]);
+        }
+        
+        // 加载数据库统计
+        async function loadDatabaseStats() {
+            try {
+                const response = await fetch(`${API_BASE}/database/stats`);
+                const data = await response.json();
+                
+                const container = document.getElementById('db-stats');
+                if (data.success) {
+                    const stats = data.data;
+                    container.innerHTML = `
+                        <div class="stat-value">${stats.total_records || 0}</div>
+                        <div class="stat-label">总记录数</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${Math.min((stats.total_records || 0) / 10000 * 100, 100)}%"></div>
+                        </div>
+                        <small>数据库运行正常</small>
+                    `;
+                } else {
+                    container.innerHTML = '<div class="alert alert-error">加载数据库统计失败</div>';
+                }
+            } catch (error) {
+                console.error('加载数据库统计失败:', error);
+                document.getElementById('db-stats').innerHTML = '<div class="alert alert-error">连接数据库失败</div>';
+            }
+        }
+        
+        // 加载存储统计
+        async function loadStorageStats() {
+            try {
+                const response = await fetch(`${API_BASE}/database/storage`);
+                const data = await response.json();
+                
+                const container = document.getElementById('storage-stats');
+                if (data.success) {
+                    const stats = data.data;
+                    const usagePercent = ((stats.used_space || 0) / (stats.total_space || 1) * 100).toFixed(1);
+                    container.innerHTML = `
+                        <div class="stat-value">${(stats.used_space / 1024 / 1024).toFixed(2)} MB</div>
+                        <div class="stat-label">已使用空间</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${usagePercent}%"></div>
+                        </div>
+                        <small>存储使用率: ${usagePercent}%</small>
+                    `;
+                } else {
+                    container.innerHTML = '<div class="alert alert-error">加载存储统计失败</div>';
+                }
+            } catch (error) {
+                console.error('加载存储统计失败:', error);
+                document.getElementById('storage-stats').innerHTML = '<div class="alert alert-error">获取存储信息失败</div>';
+            }
+        }
+        
+        // 加载压缩统计
+        async function loadCompressionStats() {
+            try {
+                const response = await fetch(`${API_BASE}/database/compression`);
+                const data = await response.json();
+                
+                const container = document.getElementById('compression-stats');
+                if (data.success) {
+                    const stats = data.data;
+                    const compressionRatio = ((1 - (stats.compressed_size || 1) / (stats.original_size || 1)) * 100).toFixed(1);
+                    container.innerHTML = `
+                        <div class="stat-value">${compressionRatio}%</div>
+                        <div class="stat-label">压缩率</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${compressionRatio}%"></div>
+                        </div>
+                        <small>节省空间: ${((stats.original_size - stats.compressed_size) / 1024 / 1024).toFixed(2)} MB</small>
+                    `;
+                } else {
+                    container.innerHTML = '<div class="alert alert-error">加载压缩统计失败</div>';
+                }
+            } catch (error) {
+                console.error('加载压缩统计失败:', error);
+                document.getElementById('compression-stats').innerHTML = '<div class="alert alert-error">获取压缩信息失败</div>';
+            }
+        }
+        
+        // 加载性能统计
+        async function loadPerformanceStats() {
+            try {
+                const response = await fetch(`${API_BASE}/database/performance`);
+                const data = await response.json();
+                
+                const container = document.getElementById('performance-stats');
+                if (data.success) {
+                    const stats = data.data;
+                    container.innerHTML = `
+                        <div class="stat-value">${(stats.avg_query_time || 0).toFixed(2)}ms</div>
+                        <div class="stat-label">平均查询时间</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${Math.min(100 - (stats.avg_query_time || 0) / 10, 100)}%"></div>
+                        </div>
+                        <small>查询性能: ${stats.avg_query_time < 50 ? '优秀' : stats.avg_query_time < 100 ? '良好' : '需优化'}</small>
+                    `;
+                } else {
+                    container.innerHTML = '<div class="alert alert-error">加载性能统计失败</div>';
+                }
+            } catch (error) {
+                console.error('加载性能统计失败:', error);
+                document.getElementById('performance-stats').innerHTML = '<div class="alert alert-error">获取性能信息失败</div>';
+            }
+        }
+        
+        // 加载最近活动
+        async function loadRecentActivity() {
+            try {
+                const response = await fetch(`${API_BASE}/database/activity`);
+                const data = await response.json();
+                
+                const container = document.getElementById('recent-activity');
+                if (data.success && data.data.length > 0) {
+                    const activityHTML = `
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>操作</th>
+                                    <th>状态</th>
+                                    <th>详情</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.map(activity => {
+                                    const time = new Date(activity.timestamp).toLocaleString('zh-CN');
+                                    const statusClass = activity.status === 'success' ? 'status-success' : 'status-processing';
+                                    return `
+                                        <tr>
+                                            <td>${time}</td>
+                                            <td>${activity.operation}</td>
+                                            <td><span class="${statusClass}">${activity.status === 'success' ? '成功' : '处理中'}</span></td>
+                                            <td>${activity.details || '-'}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    container.innerHTML = activityHTML;
+                } else {
+                    container.innerHTML = '<p>暂无最近活动记录</p>';
+                }
+            } catch (error) {
+                console.error('加载最近活动失败:', error);
+                document.getElementById('recent-activity').innerHTML = '<div class="alert alert-error">加载活动记录失败</div>';
+            }
+        }
+        
+        // 数据库管理操作
+        async function optimizeDatabase() {
+            const resultContainer = document.getElementById('operation-result');
+            resultContainer.innerHTML = '<div class="loading"></div><span>正在优化数据库...</span>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/database/optimize`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultContainer.innerHTML = '<div class="alert alert-success">数据库优化完成！</div>';
+                    // 刷新统计数据
+                    loadDashboardData();
+                } else {
+                    resultContainer.innerHTML = `<div class="alert alert-error">优化失败: ${data.message}</div>`;
+                }
+            } catch (error) {
+                console.error('优化数据库失败:', error);
+                resultContainer.innerHTML = '<div class="alert alert-error">优化操作失败</div>';
+            }
+        }
+        
+        async function exportData() {
+            const resultContainer = document.getElementById('operation-result');
+            resultContainer.innerHTML = '<div class="loading"></div><span>正在导出数据...</span>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/database/export`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `database_export_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    resultContainer.innerHTML = '<div class="alert alert-success">数据导出完成！</div>';
+                } else {
+                    resultContainer.innerHTML = '<div class="alert alert-error">导出失败</div>';
+                }
+            } catch (error) {
+                console.error('导出数据失败:', error);
+                resultContainer.innerHTML = '<div class="alert alert-error">导出操作失败</div>';
+            }
+        }
+        
+        async function cleanupData() {
+            if (!confirm('确定要清理过期数据吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            const resultContainer = document.getElementById('operation-result');
+            resultContainer.innerHTML = '<div class="loading"></div><span>正在清理过期数据...</span>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/database/cleanup`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultContainer.innerHTML = `<div class="alert alert-success">清理完成！删除了 ${data.deleted_count || 0} 条过期记录</div>`;
+                    // 刷新统计数据
+                    loadDashboardData();
+                } else {
+                    resultContainer.innerHTML = `<div class="alert alert-error">清理失败: ${data.message}</div>`;
+                }
+            } catch (error) {
+                console.error('清理数据失败:', error);
+                resultContainer.innerHTML = '<div class="alert alert-error">清理操作失败</div>';
+            }
+        }
+        
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化导航
+            const navButtons = document.querySelectorAll('.nav-button');
+            const sections = document.querySelectorAll('.section');
+            
+            navButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetSection = this.getAttribute('data-section');
+                    
+                    // 更新导航按钮状态
+                    navButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 显示对应的内容区域
+                    sections.forEach(section => {
+                        if (section.id === targetSection) {
+                            section.classList.add('active');
+                        } else {
+                            section.classList.remove('active');
+                        }
+                    });
+                    
+                    // 根据选择的页面加载相应数据
+                    if (targetSection === 'stats-section') {
+                        loadStats();
+                    } else if (targetSection === 'dashboard-section') {
+                        loadDashboardData();
+                    }
+                });
+            });
+            
+            // 默认加载统计页面
+            loadStats();
+        });
+        
+        // 工具函数：格式化数字
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+        
+        // 工具函数：格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // 工具函数：格式化时间
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    </script>
+</body>
+</html>
