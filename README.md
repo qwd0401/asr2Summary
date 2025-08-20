@@ -1,208 +1,208 @@
-# 🚀 MeetAssistant - Intelligent Meeting Assistant
+# 🚀 MeetAssistant - 智能会议助手
 
 [![中文](https://img.shields.io/badge/README-中文-blue)](README.md) [![English](https://img.shields.io/badge/README-English-red)](README_EN.md)
 
-A Flask-based intelligent meeting assistant system that provides speech-to-text, meeting summarization, and data management capabilities. Supports professional summary templates for various meeting types, making meeting records more efficient and professional.
+一个基于Flask的智能会议助手系统，提供语音转文字、会议总结和数据管理功能。支持多种会议类型的专业化总结模板，让会议记录更高效、更专业。
 
-## ✨ Core Features
+## ✨ 核心功能
 
-### 🎤 Audio Processing
-- **Multi-format Support**: Supports mainstream audio formats including MP3, WAV, M4A, FLAC
-- **High-precision Transcription**: Based on advanced speech recognition technology for accurate speech-to-text conversion
-- **Large File Processing**: Supports audio file uploads up to 100MB
-- **Real-time Progress**: Provides real-time progress feedback during processing
+### 🎤 语音处理
+- **多格式支持**: 支持 MP3、WAV、M4A、FLAC 等主流音频格式
+- **高精度转录**: 基于先进的语音识别技术，提供准确的语音转文字服务
+- **大文件处理**: 支持最大 100MB 的音频文件上传
+- **实时进度**: 处理过程中提供实时进度反馈
 
-### 📝 Intelligent Summarization
-- **Multi-template Support**: Built-in 8 professional meeting templates
-  - 🏢 **Product Meetings**: Product planning, requirement discussions, feature reviews
-  - 🤝 **Business Meetings**: Business negotiations, partnership discussions, sales meetings
-  - 🔧 **Technical Meetings**: Technical reviews, architecture design, code reviews
-  - 👥 **Management Meetings**: Team management, project management, strategic planning
-  - 📈 **Marketing Meetings**: Marketing strategies, campaigns, brand promotion
-  - 💰 **Finance Meetings**: Financial analysis, budget planning, cost control
-  - 🧪 **Test Case Reviews**: Test case reviews, testing strategy development
-  - 📋 **Requirement Reviews**: Requirement analysis, requirement change discussions
-  - 📄 **General Meetings**: Suitable for various general meeting scenarios
+### 📝 智能总结
+- **多模板支持**: 内置8种专业会议模板
+  - 🏢 **产品会议**: 产品规划、需求讨论、功能评审
+  - 🤝 **商务会议**: 商务谈判、合作洽谈、销售会议
+  - 🔧 **技术会议**: 技术评审、架构设计、代码审查
+  - 👥 **管理会议**: 团队管理、项目管理、战略规划
+  - 📈 **市场营销**: 市场策略、营销活动、品牌推广
+  - 💰 **财务会议**: 财务分析、预算规划、成本控制
+  - 🧪 **用例评审**: 测试用例评审、测试策略制定
+  - 📋 **需求评审**: 需求分析、需求变更讨论
+  - 📄 **通用会议**: 适用于各种一般性会议场景
 
-- **Structured Output**: Generates structured content including topics, decisions, task lists, risk identification
-- **Professional Terminology**: Uses appropriate professional terms and expressions for different meeting types
+- **结构化输出**: 生成包含议题、决策、任务清单、风险识别等结构化内容
+- **专业术语**: 针对不同会议类型使用相应的专业术语和表达方式
 
-### 🌐 Web Interface
-- **Intuitive Operation**: Drag-and-drop upload, one-click processing, real-time feedback
-- **Unified Dashboard**: Integrated usage statistics and database management features
-- **Responsive Design**: Supports desktop and mobile device access
-- **File Management**: Automatically saves processing results, supports batch downloads
+### 🌐 Web界面
+- **直观操作**: 拖拽上传、一键处理、实时反馈
+- **统一仪表板**: 集成使用统计和数据库管理功能
+- **响应式设计**: 支持桌面和移动设备访问
+- **文件管理**: 自动保存处理结果，支持批量下载
 
-### 📊 Data Statistics
-- **Usage Analysis**: Detailed API call statistics and performance metrics
-- **Error Monitoring**: Real-time error tracking and logging
-- **Visual Charts**: Intuitive data display and trend analysis
+### 📊 数据统计
+- **使用分析**: 详细的API调用统计和性能指标
+- **错误监控**: 实时错误追踪和日志记录
+- **可视化图表**: 直观的数据展示和趋势分析
 
-### 🗄️ Data Management
-- **SQLite Database**: Lightweight data storage solution
-- **Data Backup**: Supports database backup and recovery
-- **Management Interface**: Provides complete database management functionality
+### 🗄️ 数据管理
+- **SQLite数据库**: 轻量级数据存储解决方案
+- **数据备份**: 支持数据库备份和恢复
+- **管理界面**: 提供完整的数据库管理功能
 
-## 🛠️ Technology Stack
+## 🛠️ 技术栈
 
-- **Backend Framework**: Flask 2.3.3
-- **Database**: SQLite
-- **Frontend**: HTML5 + CSS3 + JavaScript
-- **Chart Library**: Chart.js
-- **HTTP Client**: Requests 2.31.0
-- **Web Server**: Werkzeug 2.3.7
+- **后端框架**: Flask 2.3.3
+- **数据库**: SQLite
+- **前端**: HTML5 + CSS3 + JavaScript
+- **图表库**: Chart.js
+- **HTTP客户端**: Requests 2.31.0
+- **Web服务器**: Werkzeug 2.3.7
 
-## 📦 Quick Start
+## 📦 快速开始
 
-### System Requirements
+### 环境要求
 - Python 3.8+
-- At least 2GB RAM
-- At least 10GB disk space
+- 至少 2GB RAM
+- 至少 10GB 磁盘空间
 
-### Installation Steps
+### 安装步骤
 
-1. **Clone Project**
+1. **克隆项目**
    ```bash
    git clone https://github.com/qwd0401/asr2Summary.git
    cd meetassistant
    ```
 
-2. **Install Dependencies**
+2. **安装依赖**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Start Service**
+3. **启动服务**
    ```bash
    python app.py
    ```
 
-4. **Access Application**
-   - Homepage: http://localhost:5000
-   - Unified Dashboard: http://localhost:5000/unified_dashboard
-   - API Documentation: See [API_README.md](API_README.md)
+4. **访问应用**
+   - 主页面: http://localhost:5000
+   - 统一仪表板: http://localhost:5000/unified_dashboard
+   - API文档: 查看 [API_README.md](API_README.md)
 
-## 🎯 User Guide
+## 🎯 使用指南
 
-### Web Interface Usage
+### Web界面使用
 
-1. **Upload Audio Files**
-   - Visit homepage http://localhost:5000
-   - Drag audio files to upload area or click to select files
-   - Supported formats: MP3, WAV, M4A, FLAC, etc.
+1. **上传音频文件**
+   - 访问主页 http://localhost:5000
+   - 拖拽音频文件到上传区域或点击选择文件
+   - 支持的格式：MP3、WAV、M4A、FLAC等
 
-2. **Process Audio**
-   - Click "Start Processing" button
-   - System will automatically complete speech transcription and meeting summarization
-   - Can click "Cancel Processing" to interrupt task at any time
+2. **处理音频**
+   - 点击"开始处理"按钮
+   - 系统将自动完成语音转录和会议总结
+   - 可随时点击"取消处理"中断任务
 
-3. **View Results**
-   - View transcription text and meeting summary online after processing
-   - Support downloading generated files (.txt and .md formats)
+3. **查看结果**
+   - 处理完成后可在线查看转录文本和会议总结
+   - 支持下载生成的文件（.txt 和 .md 格式）
 
-4. **Data Statistics**
-   - Click "📊 View Usage Statistics" to access unified dashboard
-   - View detailed usage data and performance metrics
-   - Manage database and system settings
+4. **数据统计**
+   - 点击"📊 查看使用统计"访问统一仪表板
+   - 查看详细的使用数据和性能指标
+   - 管理数据库和系统设置
 
-### API Calls
+### API调用
 
-For detailed API documentation, please refer to [API_README.md](API_README.md), including:
-- File upload interface
-- Speech transcription interface
-- Meeting summarization interface
-- One-click processing interface
-- Statistics data interface
+详细的API文档请参考 [API_README.md](API_README.md)，包含：
+- 文件上传接口
+- 语音转录接口
+- 会议总结接口
+- 一键处理接口
+- 统计数据接口
 
-## 📁 Project Structure
+## 📁 项目结构
 
 ```
 meetassistant/
-├── app.py                 # Main application
-├── app_db.py             # Database management application
-├── asr2text.py           # Speech-to-text module
-├── meetassistant.py      # Core processing logic
-├── database.py           # Database operations
-├── compression_utils.py  # File compression utilities
-├── templates/            # HTML templates
-│   ├── index.html        # Homepage
-│   ├── dashboard.html    # Management dashboard
-│   └── unified_dashboard.html # Unified dashboard
-├── templates_config.json # Meeting template configuration
-├── uploads/              # Upload files directory
-├── summaries/            # Processing results directory
-├── logs/                 # Log files directory
-├── requirements.txt      # Python dependencies
-├── API_README.md         # API documentation
-├── DEPLOYMENT.md         # Deployment guide
-└── README.md            # Project documentation
+├── app.py                 # 主应用程序
+├── app_db.py             # 数据库管理应用
+├── asr2text.py           # 语音转文字模块
+├── meetassistant.py      # 核心处理逻辑
+├── database.py           # 数据库操作
+├── compression_utils.py  # 文件压缩工具
+├── templates/            # HTML模板
+│   ├── index.html        # 主页面
+│   ├── dashboard.html    # 管理仪表板
+│   └── unified_dashboard.html # 统一仪表板
+├── templates_config.json # 会议模板配置
+├── uploads/              # 上传文件目录
+├── summaries/            # 处理结果目录
+├── logs/                 # 日志文件目录
+├── requirements.txt      # Python依赖
+├── API_README.md         # API文档
+├── DEPLOYMENT.md         # 部署指南
+└── README.md            # 项目说明
 ```
 
-## 🚀 Deployment Guide
+## 🚀 部署指南
 
-### Development Environment
+### 开发环境
 ```bash
-# Start development server
+# 启动开发服务器
 python app.py
 ```
 
-### Production Environment
-For detailed production environment deployment guide, please refer to [DEPLOYMENT.md](DEPLOYMENT.md), including:
-- Traditional deployment methods
-- Docker containerized deployment
-- Nginx reverse proxy configuration
-- System service configuration
+### 生产环境
+详细的生产环境部署指南请参考 [DEPLOYMENT.md](DEPLOYMENT.md)，包含：
+- 传统部署方式
+- Docker容器化部署
+- Nginx反向代理配置
+- 系统服务配置
 
-### Docker Deployment
+### Docker部署
 ```bash
-# Build image
+# 构建镜像
 docker build -t meetassistant .
 
-# Run container
+# 运行容器
 docker run -p 5000:5000 meetassistant
 
-# Or use docker-compose
+# 或使用docker-compose
 docker-compose up -d
 ```
 
-## 📊 Feature Highlights
+## 📊 功能特色
 
-### 🎯 Professional Templates
-- Customized professional templates for different industries and meeting types
-- Structured output format for easy subsequent processing and archiving
-- Support for custom template extensions
+### 🎯 专业化模板
+- 针对不同行业和会议类型定制的专业模板
+- 结构化输出格式，便于后续处理和归档
+- 支持自定义模板扩展
 
-### 📈 Data Insights
-- Real-time usage statistics and performance monitoring
-- Error tracking and log analysis
-- Visual data presentation
+### 📈 数据洞察
+- 实时使用统计和性能监控
+- 错误追踪和日志分析
+- 可视化数据展示
 
-### 🔧 Easy Integration
-- RESTful API design for easy third-party integration
-- Complete API documentation and sample code
-- Support for batch processing and automated workflows
+### 🔧 易于集成
+- RESTful API设计，易于第三方集成
+- 完整的API文档和示例代码
+- 支持批量处理和自动化工作流
 
-## 🤝 Contributing
+## 🤝 贡献指南
 
-Welcome to submit Issues and Pull Requests to help improve the project!
+欢迎提交Issue和Pull Request来帮助改进项目！
 
-1. Fork the project
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
+1. Fork 项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
 
-## 📄 License
+## 📄 许可证
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
-## 📞 Support & Feedback
+## 📞 支持与反馈
 
-If you encounter problems during use or have suggestions for improvement, please:
-- Submit [Issue](../../issues)
-- Send email to project maintainers
-- Check [API Documentation](API_README.md) and [Deployment Guide](DEPLOYMENT.md)
+如果您在使用过程中遇到问题或有改进建议，请：
+- 提交 [Issue](../../issues)
+- 发送邮件至项目维护者
+- 查看 [API文档](API_README.md) 和 [部署指南](DEPLOYMENT.md)
 
 ---
 
-**MeetAssistant** - Making meeting records smarter and work more efficient! 🚀
+**MeetAssistant** - 让会议记录更智能，让工作更高效！ 🚀
