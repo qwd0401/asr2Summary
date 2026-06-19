@@ -74,18 +74,18 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Cache npm
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('package.json') }}
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Run eslint
         run: npm run lint
