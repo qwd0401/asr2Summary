@@ -116,8 +116,7 @@ jobs:
           import re, sys
           emoji_re = re.compile(r'[\U0001F300-\U0001F9FF\u2600-\u26FF\u2700-\u27BF]')
           failed = False
-          for path in ['templates/index.html', 'templates/dashboard.html',
-                       'templates/summaries.html', 'templates/unified_dashboard.html']:
+          for path in ['templates/index.html', 'templates/unified_dashboard.html']:
               with open(path, encoding='utf-8') as f:
                   emojis = emoji_re.findall(f.read())
               if emojis:

@@ -6,7 +6,7 @@ import os
 import time
 import zipfile
 
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, redirect, render_template, request, send_file
 import requests
 from werkzeug.utils import secure_filename
 
@@ -832,8 +832,8 @@ def get_usage_stats():
 
 @app.route("/stats/dashboard", methods=["GET"])
 def stats_dashboard():
-    """统计数据仪表板页面"""
-    return render_template("stats.html")
+    """统计数据仪表板页面（重定向到统一仪表板）"""
+    return redirect("/unified_dashboard")
 
 
 @app.route("/unified_dashboard", methods=["GET"])
