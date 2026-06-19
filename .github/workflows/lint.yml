@@ -1,0 +1,146 @@
+name: Lint
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# Cancel in-progress runs on same branch
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================
+  # Python lint + format check
+  # ============================================================
+  python-lint:
+    name: Python (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install ruff
+        run: pip install 'ruff>=0.6.0'
+
+      - name: Run ruff check
+        run: ruff check . --output-format=github
+
+      - name: Run ruff format check
+        run: ruff format --check .
+
+      - name: Python syntax check
+        run: |
+          python -c "
+          import ast, sys
+          for f in ['app.py', 'database.py', 'compression_utils.py',
+                   'auth.py', 'config.py', 'production_config.py', 'production_start.py']:
+              try:
+                  ast.parse(open(f, encoding='utf-8').read())
+                  print(f'OK  {f}')
+              except SyntaxError as e:
+                  print(f'ERR {f}: {e}'); sys.exit(1)
+          "
+
+  # ============================================================
+  # JavaScript lint + format check
+  # ============================================================
+  js-lint:
+    name: JavaScript (eslint + prettier)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run eslint
+        run: npm run lint
+
+      - name: Run prettier check
+        run: npm run format:check
+
+  # ============================================================
+  # HTML / template sanity (link checker, alt text)
+  # ============================================================
+  templates-lint:
+    name: Templates (sanity)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check no emoji as icons in templates
+        run: |
+          python -c "
+          import re, sys
+          emoji_re = re.compile(r'[\U0001F300-\U0001F9FF\u2600-\u26FF\u2700-\u27BF]')
+          failed = False
+          for path in ['templates/index.html', 'templates/dashboard.html',
+                       'templates/summaries.html', 'templates/unified_dashboard.html']:
+              with open(path, encoding='utf-8') as f:
+                  emojis = emoji_re.findall(f.read())
+              if emojis:
+                  print(f'FAIL {path}: {len(emojis)} emojis found: {set(emojis)}')
+                  failed = True
+              else:
+                  print(f'OK   {path}: no emojis')
+          sys.exit(1 if failed else 0)
+          "
+
+      - name: Check no hardcoded API keys in code
+        run: |
+          if grep -rE 'sk-[a-zA-Z0-9]{20,}' --include='*.py' --include='*.js' .; then
+            echo "FAIL: hardcoded API key found in source"
+            exit 1
+          else
+            echo "OK: no hardcoded API keys in code"
+          fi
+
+      - name: Check no hardcoded API keys in committed env
+        run: |
+          if [ -f .env ] && git log --all --oneline -- .env 2>/dev/null | head -1 | grep -q .; then
+            echo "FAIL: .env is tracked in git history"
+            exit 1
+          fi
+          echo "OK: .env not tracked"

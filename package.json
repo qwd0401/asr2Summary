@@ -1,0 +1,21 @@
+{
+  "name": "meetassistant-web",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Frontend assets for MeetAssistant (vanilla JS, no build step)",
+  "scripts": {
+    "lint": "eslint static/js",
+    "lint:fix": "eslint static/js --fix",
+    "format:check": "prettier --check static/js",
+    "format": "prettier --write static/js"
+  },
+  "devDependencies": {
+    "eslint": "^9.13.0",
+    "globals": "^15.11.0",
+    "prettier": "^3.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

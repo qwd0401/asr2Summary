@@ -1,0 +1,96 @@
+# ============================================================
+# MeetAssistant — Python project config
+# ============================================================
+
+[project]
+name = "meetassistant"
+version = "2.0.0"
+description = "AI-powered meeting assistant: speech-to-text + structured summaries"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+readme = "README.md"
+dependencies = [
+    "Flask==2.3.3",
+    "requests==2.31.0",
+    "Werkzeug==2.3.7",
+    "pathlib2==2.3.7.post1; python_version<'3.4'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6.0",
+    "pre-commit>=3.5.0",
+]
+
+# ============================================================
+# Tooling
+# ============================================================
+
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+extend-exclude = [
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "node_modules",
+    "migrations",
+]
+
+[tool.ruff.lint]
+# Defaults + a curated set focused on correctness and modern style.
+# Reference: https://docs.astral.sh/ruff/rules/
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes (unused imports, undefined names, etc.)
+    "I",    # isort (import sorting)
+    "B",    # flake8-bugbear (likely bugs)
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade (modernize syntax)
+    "N",    # pep8-naming
+    "SIM",  # flake8-simplify
+    "PIE",  # flake8-pie
+    "RUF",  # ruff-specific rules
+]
+ignore = [
+    "E501",   # line too long — handled by formatter
+    "B008",   # function call in default argument — common Flask pattern
+    "N802",   # function name should be lowercase — exemptions for HTTP verbs
+    "N803",   # argument name should be lowercase — exemptions for HTTP / DB
+    "N806",   # variable in function should be lowercase — OK for acronyms
+    "SIM108", # use ternary operator — readability sometimes better
+    "UP031",  # use format specifiers instead of percent format
+    # Project uses Chinese (CJK) characters in strings, comments, docstrings.
+    # These rules flag Unicode that's visually ambiguous; not relevant for CJK.
+    "RUF001", # ambiguous-unicode-character-string
+    "RUF002", # ambiguous-unicode-character-docstring
+    "RUF003", # ambiguous-unicode-character-comment
+]
+
+[tool.ruff.lint.per-file-ignores]
+"app.py" = ["E402"]
+"templates/*" = ["E999"]        # not python
+"static/*" = ["E999"]
+"scripts/*" = ["T201"]          # allow print in scripts
+
+[tool.ruff.lint.isort]
+known-first-party = ["database", "compression_utils", "config"]
+combine-as-imports = true
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+skip-magic-trailing-comma = false
+
+# ============================================================
+# Pre-commit hooks (optional)
+# ============================================================
+
+[tool.pre-commit]
+fail_fast = false
+skip = ["validate_config"]

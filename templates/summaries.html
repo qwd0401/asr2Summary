@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>总结文件 · MeetAssistant</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/upload.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">
+
+  <meta name="theme-color" content="#0A0A0F">
+  <meta name="color-scheme" content="dark">
+  <style>
+    /* Page-local: filter toolbar */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+    .toolbar .input { max-width: 360px; }
+    .toolbar .select { max-width: 200px; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: var(--space-4);
+    }
+
+    .summary-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: transform var(--dur-base) var(--ease-out),
+                  box-shadow var(--dur-base) var(--ease-out),
+                  border-color var(--dur-base) var(--ease-out);
+    }
+    /* 顶部 accent 线条：平时透明，hover 时渐显 */
+    .summary-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--gradient-brand);
+      opacity: 0;
+      transition: opacity var(--dur-base) var(--ease-out);
+    }
+    .summary-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-border-strong);
+    }
+    .summary-card:hover::before { opacity: 1; }
+
+    .summary-card-header {
+      display: flex;
+      align-items: center; /* 改为居中对齐，让图标和文字基线更协调 */
+      gap: var(--space-3);
+      min-width: 0;
+    }
+    .summary-card-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+      color: var(--color-primary);
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+      transition: background var(--dur-base) var(--ease-out),
+                  box-shadow var(--dur-base) var(--ease-out);
+    }
+    .summary-card-icon .icon { width: 22px; height: 22px; }
+    .summary-card:hover .summary-card-icon {
+      background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 10%, transparent);
+    }
+
+    .summary-card-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .summary-card-title {
+      font-size: var(--fs-base);
+      font-weight: var(--fw-semibold);
+      color: var(--color-text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: color var(--dur-fast) var(--ease-out);
+    }
+    .summary-card:hover .summary-card-title { color: var(--color-primary); }
+    .summary-card-meta {
+      font-size: var(--fs-xs);
+      color: var(--color-text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+    .summary-card-actions {
+      display: flex;
+      gap: var(--space-2);
+      padding-top: var(--space-3);
+      margin-top: auto; /* 让按钮始终贴底，卡片高度不一时也整齐 */
+      border-top: 1px solid var(--color-border);
+    }
+    .summary-card-actions .btn {
+      flex: 1; /* 预览/下载按钮等宽 */
+      justify-content: center;
+    }
+
+    /* Preview drawer */
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(560px, 100vw);
+      background: var(--color-surface);
+      border-left: 1px solid var(--color-border);
+      box-shadow: var(--shadow-xl);
+      z-index: var(--z-modal);
+      transform: translateX(100%);
+      transition: transform var(--dur-slow) var(--ease-out);
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer[data-open="true"] { transform: translateX(0); }
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--dur-base) var(--ease-out);
+      z-index: var(--z-overlay);
+    }
+    .drawer-overlay[data-open="true"] { opacity: 1; pointer-events: auto; }
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      border-bottom: 1px solid var(--color-border);
+      gap: var(--space-3);
+    }
+    .drawer-title {
+      font-size: var(--fs-base);
+      font-weight: var(--fw-semibold);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-5);
+    }
+    .drawer-body .result-content {
+      max-height: none;
+      background: var(--color-surface-2);
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="app-header" role="banner">
+    <div class="app-header-inner container">
+      <a href="/" class="app-brand">
+        <span data-lucide="mic" data-size="28"></span>
+        <span>MeetAssistant</span>
+      </a>
+      <nav class="app-nav" aria-label="主导航">
+        <a href="/"><span data-lucide="upload" data-size="18"></span><span>处理音频</span></a>
+        <a href="/summaries" class="active" aria-current="page"><span data-lucide="file" data-size="18"></span><span>总结文件</span></a>
+        <a href="/unified_dashboard"><span data-lucide="bar-chart-3" data-size="18"></span><span>仪表板</span></a>
+        <a href="/dashboard"><span data-lucide="cog" data-size="18"></span><span>数据库</span></a>
+        <button id="themeToggle" type="button" aria-label="切换主题" style="background:none;border:0;padding:var(--space-2);border-radius:var(--radius-md);color:var(--color-text-muted);cursor:pointer">
+          <span data-lucide="sun" data-size="18"></span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container" tabindex="-1" style="padding-top: var(--space-8); padding-bottom: var(--space-12);">
+    <div class="dash-page-header">
+      <div>
+        <h1>总结文件</h1>
+        <p>浏览、预览与下载所有会议总结</p>
+      </div>
+      <div class="cluster">
+        <span class="badge"><span data-lucide="file" data-size="14"></span> 共 <span id="total-count">{{ summaries|length }}</span> 个</span>
+      </div>
+    </div>
+
+    <div class="toolbar" role="search">
+      <label for="searchInput" class="sr-only">搜索文件名</label>
+      <div style="position:relative;flex:1;max-width:360px;">
+        <input id="searchInput" type="search" class="input" placeholder="搜索文件名…" aria-label="搜索文件名" autocomplete="off"
+               style="padding-left: 40px;">
+        <span data-lucide="search" data-size="18"
+              style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--color-text-subtle);pointer-events:none;"></span>
+      </div>
+
+      <label for="sortSelect" class="sr-only">排序方式</label>
+      <select id="sortSelect" class="select" aria-label="排序方式">
+        <option value="modified_desc">最新修改优先</option>
+        <option value="modified_asc">最早修改优先</option>
+        <option value="name_asc">名称 A → Z</option>
+        <option value="name_desc">名称 Z → A</option>
+        <option value="size_desc">大小（大 → 小）</option>
+      </select>
+    </div>
+
+    <section id="summaryGrid" class="summary-grid" aria-label="总结列表">
+      {% for s in summaries %}
+      <article class="summary-card" data-filename="{{ s.filename }}">
+        <div class="summary-card-header">
+          <div class="summary-card-icon"><span data-lucide="file"></span></div>
+          <div class="summary-card-body">
+            <div class="summary-card-title" title="{{ s.filename }}">{{ s.filename }}</div>
+            <div class="summary-card-meta">
+              {{ (s.size / 1024)|round(1) }} KB · {{ s.modified_time }}
+            </div>
+          </div>
+        </div>
+        <div class="summary-card-actions">
+          <button type="button" class="btn btn-secondary" data-action="preview" data-id="{{ s.id }}">
+            <span data-lucide="info" data-size="16" class="icon"></span>预览
+          </button>
+          <a class="btn btn-primary" href="/download/summary/{{ s.id }}" download>
+            <span data-lucide="download" data-size="16" class="icon"></span>下载
+          </a>
+        </div>
+      </article>
+      {% endfor %}
+
+      {% if not summaries %}
+      <div class="state-block" style="grid-column: 1 / -1;">
+        <span data-lucide="file" class="icon"></span>
+        <h3>暂无总结文件</h3>
+        <p>处理音频文件后会自动生成 Markdown 格式的会议总结。</p>
+        <a href="/" class="btn btn-primary">
+          <span data-lucide="upload" data-size="18" class="icon"></span>
+          开始处理
+        </a>
+      </div>
+      {% endif %}
+    </section>
+
+    <div id="emptyState" class="state-block" hidden>
+      <span data-lucide="info" class="icon"></span>
+      <h3>未找到匹配的文件</h3>
+      <p>试试调整搜索关键词。</p>
+    </div>
+  </main>
+
+  <!-- Preview drawer -->
+  <div id="drawerOverlay" class="drawer-overlay" data-open="false" aria-hidden="true"></div>
+  <aside id="previewDrawer" class="drawer" data-open="false" aria-hidden="true" aria-labelledby="drawerTitle" role="dialog">
+    <div class="drawer-header">
+      <span id="drawerTitle" class="drawer-title">—</span>
+      <button type="button" class="btn btn-ghost" id="closeDrawer" aria-label="关闭预览">
+        <span data-lucide="x" data-size="20"></span>
+      </button>
+    </div>
+    <div class="drawer-body">
+      <div id="drawerContent" class="result-content markdown">加载中…</div>
+    </div>
+  </aside>
+
+  <script src="{{ url_for('static', filename='js/icons.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/markdown.js') }}"></script>
+
+  <script>
+    (function () {
+      const grid = document.getElementById('summaryGrid');
+      const searchInput = document.getElementById('searchInput');
+      const sortSelect = document.getElementById('sortSelect');
+      const totalCount = document.getElementById('total-count');
+      const emptyState = document.getElementById('emptyState');
+
+      const drawer = document.getElementById('previewDrawer');
+      const drawerOverlay = document.getElementById('drawerOverlay');
+      const drawerTitle = document.getElementById('drawerTitle');
+      const drawerContent = document.getElementById('drawerContent');
+      const closeDrawer = document.getElementById('closeDrawer');
+
+      // Cache original cards for filtering without re-fetching
+      const allCards = Array.from(grid.querySelectorAll('.summary-card'));
+      const cardData = allCards.map((card) => ({
+        el: card,
+        filename: card.dataset.filename.toLowerCase(),
+        size: parseInt((card.querySelector('.summary-card-meta').textContent.match(/[\d.]+ KB/) || ['0'])[0], 10),
+        modified: card.querySelector('.summary-card-meta').textContent.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)?.[0] || ''
+      }));
+
+      function applyFilter() {
+        const q = searchInput.value.trim().toLowerCase();
+        const sortKey = sortSelect.value;
+        let visible = cardData.filter((c) => !q || c.filename.includes(q));
+
+        visible.sort((a, b) => {
+          if (sortKey === 'modified_desc') return b.modified.localeCompare(a.modified);
+          if (sortKey === 'modified_asc') return a.modified.localeCompare(b.modified);
+          if (sortKey === 'name_asc') return a.filename.localeCompare(b.filename);
+          if (sortKey === 'name_desc') return b.filename.localeCompare(a.filename);
+          if (sortKey === 'size_desc') return b.size - a.size;
+          return 0;
+        });
+
+        // Reorder DOM and toggle visibility
+        const frag = document.createDocumentFragment();
+        visible.forEach((c) => frag.appendChild(c.el));
+        grid.appendChild(frag);
+        cardData.forEach((c) => {
+          c.el.hidden = !visible.includes(c);
+        });
+
+        emptyState.hidden = visible.length > 0;
+        totalCount.textContent = visible.length;
+      }
+
+      function openDrawer(summaryId) {
+        drawerTitle.textContent = '总结 #' + summaryId;
+        drawerContent.innerHTML = '<div class="state-block"><span class="spinner"></span></div>';
+        drawer.setAttribute('data-open', 'true');
+        drawer.setAttribute('aria-hidden', 'false');
+        drawerOverlay.setAttribute('data-open', 'true');
+        drawerOverlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        trapFocus(drawer);
+
+        fetch('/api/summaries/preview/' + summaryId)
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.success) {
+              if (window.markdown) {
+                drawerContent.innerHTML = window.markdown.render(data.preview);
+              } else {
+                drawerContent.textContent = data.preview;
+              }
+              if (window.appIcons) window.appIcons.render(drawerContent);
+            } else {
+              drawerContent.innerHTML = '<div class="alert alert-error">' + (data.error || '加载失败') + '</div>';
+            }
+          })
+          .catch((e) => {
+            drawerContent.innerHTML = '<div class="alert alert-error">网络错误：' + e.message + '</div>';
+          });
+      }
+
+      function closeDrawerFn() {
+        drawer.setAttribute('data-open', 'false');
+        drawer.setAttribute('aria-hidden', 'true');
+        drawerOverlay.setAttribute('data-open', 'false');
+        drawerOverlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+
+      function trapFocus(container) {
+        const focusable = container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (focusable.length) focusable[0].focus();
+      }
+
+      // Debounced search
+      let timer;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(applyFilter, 150);
+      });
+      sortSelect.addEventListener('change', applyFilter);
+
+      // Preview button delegation
+      grid.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action="preview"]');
+        if (btn) {
+          openDrawer(btn.dataset.id);
+        }
+      });
+
+      closeDrawer.addEventListener('click', closeDrawerFn);
+      drawerOverlay.addEventListener('click', closeDrawerFn);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && drawer.getAttribute('data-open') === 'true') {
+          closeDrawerFn();
+        }
+      });
+
+      if (window.appIcons) window.appIcons.render();
+    })();
+  </script>
+</body>
+</html>

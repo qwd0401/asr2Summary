@@ -1,0 +1,87 @@
+# ============================================================
+# MeetAssistant — pre-commit hooks
+# Install:  pip install pre-commit && pre-commit install
+# Run all:  pre-commit run --all-files
+# ============================================================
+
+repos:
+  # ---- Python ----
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  # ---- JavaScript (Node-based hooks) ----
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint (node)
+        language: node
+        entry: npx eslint --fix
+        files: \.js$
+        additional_dependencies:
+          - eslint@^9.13.0
+          - '@eslint/js@^9.13.0'
+          - globals@^15.11.0
+      - id: prettier-js
+        name: prettier (js)
+        language: node
+        entry: npx prettier --write
+        files: \.js$
+        additional_dependencies:
+          - prettier@^3.3.3
+
+  # ---- Generic checks ----
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+        exclude: ^templates/.*\.html$
+      - id: check-json
+        exclude: ^node_modules/
+      - id: check-yaml
+        exclude: ^node_modules/
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: [--branch, main]
+
+  # ---- Security: detect hardcoded secrets ----
+  - repo: local
+    hooks:
+      - id: no-hardcoded-api-keys
+        name: no hardcoded API keys
+        language: system
+        entry: python -c "
+          import re, sys;
+          files = sys.argv[1:];
+          pat = re.compile(r'sk-[a-zA-Z0-9]{20,}');
+          hits = [f for f in files if pat.search(open(f, encoding='utf-8', errors='ignore').read()) and f != '.env'];
+          [print(f'FAIL {f}') for f in hits];
+          sys.exit(1 if hits else 0)
+          "
+        files: \.(py|js|ts)$
+
+  # ---- Emoji in templates ----
+  - repo: local
+    hooks:
+      - id: no-emoji-icons-in-html
+        name: no emoji icons in HTML templates
+        language: system
+        entry: python -c "
+          import re, sys;
+          files = sys.argv[1:];
+          pat = re.compile(r'[\U0001F300-\U0001F9FF\u2600-\u26FF\u2700-\u27BF]');
+          hits = [f for f in files if pat.search(open(f, encoding='utf-8').read())];
+          [print(f'FAIL {f}') for f in hits];
+          sys.exit(1 if hits else 0)
+          "
+        files: ^templates/.*\.html$

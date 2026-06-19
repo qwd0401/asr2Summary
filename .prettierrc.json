@@ -1,0 +1,19 @@
+{
+  "singleQuote": true,
+  "semi": true,
+  "tabWidth": 2,
+  "useTabs": false,
+  "printWidth": 100,
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "overrides": [
+    {
+      "files": "static/js/upload.js",
+      "options": {
+        "printWidth": 120
+      }
+    }
+  ]
+}

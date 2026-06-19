@@ -1,0 +1,11 @@
+node_modules/
+package-lock.json
+*.min.js
+*.bundle.js
+summaries/
+uploads/
+logs/
+__pycache__/
+.venv/
+venv/
+static/css/
