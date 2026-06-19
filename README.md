@@ -118,24 +118,33 @@
 
 ```
 meetassistant/
-├── app.py                 # 主应用程序
-├── app_db.py             # 数据库管理应用
-├── asr2text.py           # 语音转文字模块
-├── meetassistant.py      # 核心处理逻辑
-├── database.py           # 数据库操作
-├── compression_utils.py  # 文件压缩工具
-├── templates/            # HTML模板
-│   ├── index.html        # 主页面
-│   ├── dashboard.html    # 管理仪表板
-│   └── unified_dashboard.html # 统一仪表板
-├── templates_config.json # 会议模板配置
-├── uploads/              # 上传文件目录
-├── summaries/            # 处理结果目录
-├── logs/                 # 日志文件目录
-├── requirements.txt      # Python依赖
-├── API_README.md         # API文档
+├── app.py                 # 主应用程序（Flask 入口 + 路由 + 业务逻辑）
+├── database.py           # SQLite 操作（meetassistant.db）
+├── auth.py               # Token 鉴权装饰器
+├── compression_utils.py  # 音频/文件压缩工具
+├── config.py             # 环境变量与配置校验
+├── production_config.py  # 生产环境配置
+├── production_start.py   # 生产模式启动入口（Gunicorn 包装）
+├── static/               # 前端静态资源
+│   ├── css/              # 设计 Token + 基础样式 + 页面样式
+│   └── js/               # 上传 / 图标 / 主题 / Toast / Markdown / 仪表板
+├── templates/            # HTML 模板
+│   ├── index.html        # 上传与处理页
+│   ├── summaries.html    # 摘要列表
+│   ├── dashboard.html    # 仪表板
+│   └── unified_dashboard.html # 统一管理
+├── templates_config.json # 会议模板（产品/商务/技术/管理）
+├── uploads/              # 上传文件目录（运行时，git 忽略）
+├── summaries/            # 处理结果目录（运行时，git 忽略）
+├── logs/                 # 日志目录（运行时，git 忽略）
+├── requirements.txt      # Python 依赖
+├── package.json          # 前端工具链（ESLint / Prettier）
+├── Dockerfile            # 容器构建
+├── docker-compose.yml    # 容器编排
+├── nginx.conf            # 反向代理示例
+├── API_README.md         # API 文档
 ├── DEPLOYMENT.md         # 部署指南
-└── README.md            # 项目说明
+└── README.md             # 项目说明
 ```
 
 ## 🚀 部署指南

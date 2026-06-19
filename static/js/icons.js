@@ -194,28 +194,6 @@
     },
   };
 
-  function renderIcon(el) {
-    const name = el.getAttribute('data-lucide');
-    if (!name || !ICONS[name]) return;
-    const def = ICONS[name];
-    const size = el.getAttribute('data-size') || '20';
-    // 一次性拼出完整 SVG，再用 innerHTML 注入（避免 createElementNS + 多次 setAttribute 的开销）
-    const html = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" aria-hidden="true" focusable="false" class="icon" ${def.attrs}>${def.paths}</svg>`;
-    const tmpl = document.createElement('template');
-    tmpl.innerHTML = html;
-    const replacement = tmpl.content.firstElementChild;
-    // 把原节点上除了 data-lucide / data-size / data-* 之外的属性和 style 复制过来，
-    // 否则像搜索框放大镜那种用内联 position:absolute 定位的图标会丢失样式、跑回文档流
-    for (const attr of Array.from(el.attributes)) {
-      if (attr.name === 'data-lucide' || attr.name === 'data-size') continue;
-      replacement.setAttribute(attr.name, attr.value);
-    }
-    if (el.style && el.style.cssText) {
-      replacement.style.cssText = el.style.cssText;
-    }
-    el.replaceWith(replacement);
-  }
-
   function renderAll(root) {
     const scope = root || document;
     const nodes = scope.querySelectorAll('[data-lucide]');
@@ -255,4 +233,31 @@
   }
 
   window.appIcons = { render: renderAll, ICONS };
+
+  // Auto-render on initial load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      renderAll();
+    });
+  } else {
+    renderAll();
+  }
+
+  // Watch for dynamically added nodes (e.g. innerHTML assignments)
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node.nodeType !== 1) continue;
+        if (node.hasAttribute && node.hasAttribute('data-lucide')) {
+          renderAll();
+          return;
+        }
+        if (node.querySelector && node.querySelector('[data-lucide]')) {
+          renderAll();
+          return;
+        }
+      }
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 })();

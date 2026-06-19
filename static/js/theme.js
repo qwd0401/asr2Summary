@@ -21,7 +21,7 @@
   }
 
   function renderIcon(btn, isDark) {
-    btn.innerHTML = '<span data-lucide="' + (isDark ? 'sun' : 'moon') + '" data-size="18"></span>';
+    btn.innerHTML = `<span data-lucide="${isDark ? 'sun' : 'moon'}" data-size="18"></span>`;
     if (window.appIcons) window.appIcons.render(btn);
   }
 
@@ -34,7 +34,7 @@
     applyTheme(isDark);
     renderIcon(btn, isDark);
 
-    btn.addEventListener('click', function () {
+    btn.addEventListener('click', () => {
       const current = getIsDark();
       const next = !current;
       localStorage.setItem(KEY, next ? 'dark' : 'light');
@@ -51,5 +51,5 @@
   }
 
   // Expose for manual calls
-  window.appTheme = { init: init, getIsDark: getIsDark };
+  window.appTheme = { init, getIsDark };
 })();

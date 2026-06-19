@@ -7,12 +7,13 @@ Usage:
     3. Clients send token via Authorization header or query parameter
 """
 
+from functools import wraps
 import hashlib
 import hmac
 import os
 import secrets
-from functools import wraps
-from flask import request, jsonify
+
+from flask import jsonify, request
 
 # Default token for development (auto-generated)
 _dev_token = None
@@ -21,7 +22,7 @@ _token_hash = None
 
 def _hash_token(token: str) -> str:
     """Hash token using SHA-256 for secure storage."""
-    return hashlib.sha256(token.encode('utf-8')).hexdigest()
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def bootstrap_admin_token():
@@ -34,7 +35,7 @@ def bootstrap_admin_token():
     """
     global _dev_token, _token_hash
 
-    token = os.environ.get('ADMIN_TOKEN', '').strip()
+    token = os.environ.get("ADMIN_TOKEN", "").strip()
 
     if token:
         # Production: use provided token
@@ -73,37 +74,38 @@ def require_token(f):
     - Query parameter: ?token=<token>
     - Form field: token=<token>
     """
+
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
 
         # Check Authorization header
-        auth_header = request.headers.get('Authorization', '')
-        if auth_header.startswith('Bearer '):
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
             token = auth_header[7:].strip()
 
         # Check query parameter
         if not token:
-            token = request.args.get('token', '').strip()
+            token = request.args.get("token", "").strip()
 
         # Check form data
         if not token:
-            token = request.form.get('token', '').strip()
+            token = request.form.get("token", "").strip()
 
         # Check JSON body
         if not token and request.is_json:
             data = request.get_json(silent=True) or {}
-            token = data.get('token', '').strip()
+            token = data.get("token", "").strip()
 
         if not token or not verify_token(token):
-            return jsonify({
-                'success': False,
-                'error': 'Unauthorized',
-                'message': 'Valid admin token required. Provide via Authorization header, query parameter, or request body.'
-            }), 401
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Unauthorized",
+                    "message": "Valid admin token required. Provide via Authorization header, query parameter, or request body.",
+                }
+            ), 401
 
         return f(*args, **kwargs)
 
     return decorated
-
-

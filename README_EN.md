@@ -118,24 +118,33 @@ For detailed API documentation, please refer to [API_README.md](API_README.md), 
 
 ```
 meetassistant/
-├── app.py                 # Main application
-├── app_db.py             # Database management application
-├── asr2text.py           # Speech-to-text module
-├── meetassistant.py      # Core processing logic
-├── database.py           # Database operations
-├── compression_utils.py  # File compression utilities
+├── app.py                 # Main application (Flask entry + routes + logic)
+├── database.py           # SQLite operations (meetassistant.db)
+├── auth.py               # Token authentication decorator
+├── compression_utils.py  # Audio/file compression helpers
+├── config.py             # Environment variables and config validation
+├── production_config.py  # Production environment configuration
+├── production_start.py   # Production-mode launcher (Gunicorn wrapper)
+├── static/               # Frontend static assets
+│   ├── css/              # Design tokens + base styles + page styles
+│   └── js/               # Upload / icons / theme / toast / markdown / dashboard
 ├── templates/            # HTML templates
-│   ├── index.html        # Homepage
-│   ├── dashboard.html    # Management dashboard
-│   └── unified_dashboard.html # Unified dashboard
-├── templates_config.json # Meeting template configuration
-├── uploads/              # Upload files directory
-├── summaries/            # Processing results directory
-├── logs/                 # Log files directory
+│   ├── index.html        # Upload & process page
+│   ├── summaries.html    # Summary list
+│   ├── dashboard.html    # Dashboard
+│   └── unified_dashboard.html # Unified management
+├── templates_config.json # Meeting templates (product / business / tech / mgmt)
+├── uploads/              # Upload directory (runtime, gitignored)
+├── summaries/            # Results directory (runtime, gitignored)
+├── logs/                 # Log directory (runtime, gitignored)
 ├── requirements.txt      # Python dependencies
+├── package.json          # Frontend toolchain (ESLint / Prettier)
+├── Dockerfile            # Container build
+├── docker-compose.yml    # Container orchestration
+├── nginx.conf            # Reverse proxy example
 ├── API_README.md         # API documentation
 ├── DEPLOYMENT.md         # Deployment guide
-└── README.md            # Project documentation
+└── README.md             # Project documentation
 ```
 
 ## 🚀 Deployment Guide

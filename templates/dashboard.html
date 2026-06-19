@@ -235,7 +235,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 MeetAssistant 数据库管理面板</h1>
+            <h1><i data-lucide="rocket"></i> MeetAssistant 数据库管理面板</h1>
             <p>轻量级数据库存储方案 - 高效、压缩、可扩展</p>
         </div>
         
@@ -243,7 +243,7 @@
             <!-- 数据库统计 -->
             <div class="card">
                 <div class="card-header">
-                    <div class="card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">📊</div>
+                    <div class="card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;"><i data-lucide="list"></i></div>
                     <div class="card-title">数据库统计</div>
                 </div>
                 <div id="db-stats">
@@ -255,7 +255,7 @@
             <!-- 存储效率 -->
             <div class="card">
                 <div class="card-header">
-                    <div class="card-icon" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white;">💾</div>
+                    <div class="card-icon" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white;"><i data-lucide="package"></i></div>
                     <div class="card-title">存储效率</div>
                 </div>
                 <div id="storage-stats">
@@ -267,7 +267,7 @@
             <!-- 压缩统计 -->
             <div class="card">
                 <div class="card-header">
-                    <div class="card-icon" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white;">🗜️</div>
+                    <div class="card-icon" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white;"><i data-lucide="cog"></i></div>
                     <div class="card-title">压缩效果</div>
                 </div>
                 <div id="compression-stats">
@@ -279,7 +279,7 @@
             <!-- 系统性能 -->
             <div class="card">
                 <div class="card-header">
-                    <div class="card-icon" style="background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%); color: white;">⚡</div>
+                    <div class="card-icon" style="background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%); color: white;"><i data-lucide="loader"></i></div>
                     <div class="card-title">系统性能</div>
                 </div>
                 <div id="performance-stats">
@@ -292,7 +292,7 @@
         <!-- 最近活动 -->
         <div class="card">
             <div class="card-header">
-                <div class="card-icon" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white;">📈</div>
+                <div class="card-icon" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white;"><i data-lucide="list"></i></div>
                 <div class="card-title">最近活动</div>
             </div>
             <div id="recent-activity">
@@ -304,7 +304,7 @@
         <!-- 数据管理操作 -->
         <div class="card">
             <div class="card-header">
-                <div class="card-icon" style="background: linear-gradient(135deg, #38b2ac 0%, #319795 100%); color: white;">🛠️</div>
+                <div class="card-icon" style="background: linear-gradient(135deg, #38b2ac 0%, #319795 100%); color: white;"><i data-lucide="cog"></i></div>
                 <div class="card-title">数据库管理</div>
             </div>
             <div>
@@ -317,239 +317,242 @@
     </div>
     
     <script>
-        // API基础URL
-        const API_BASE = '/api';
-        
-        // 页面加载时初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            loadDashboardData();
-            // 每30秒刷新一次数据
-            setInterval(loadDashboardData, 30000);
-        });
-        
-        // 加载仪表板数据
-        async function loadDashboardData() {
-            try {
-                await Promise.all([
-                    loadDatabaseStats(),
-                    loadStorageStats(),
-                    loadCompressionStats(),
-                    loadPerformanceStats(),
-                    loadRecentActivity()
-                ]);
-            } catch (error) {
-                console.error('加载数据失败:', error);
-            }
-        }
-        
-        // 加载数据库统计
-        async function loadDatabaseStats() {
-            try {
-                const response = await fetch(`${API_BASE}/stats/overview`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const stats = data.data.database_stats;
-                    document.getElementById('db-stats').innerHTML = `
-                        <div class="stat-value">${stats.total_records || 0}</div>
-                        <div class="stat-label">总记录数</div>
-                        <div style="margin-top: 15px;">
-                            <div>音频文件: <strong>${stats.audio_files || 0}</strong></div>
-                            <div>转录记录: <strong>${stats.transcriptions || 0}</strong></div>
-                            <div>会议总结: <strong>${stats.summaries || 0}</strong></div>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                document.getElementById('db-stats').innerHTML = '<div class="alert alert-error">加载失败</div>';
-            }
-        }
-        
-        // 加载存储统计
-        async function loadStorageStats() {
-            try {
-                const response = await fetch(`${API_BASE}/stats/overview`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const dbSize = Math.random() * 100 + 50; // 模拟数据库大小
-                    const efficiency = Math.random() * 30 + 70; // 模拟存储效率
-                    
-                    document.getElementById('storage-stats').innerHTML = `
-                        <div class="stat-value">${dbSize.toFixed(1)} MB</div>
-                        <div class="stat-label">数据库大小</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${efficiency}%"></div>
-                        </div>
-                        <div class="stat-label">存储效率: ${efficiency.toFixed(1)}%</div>
-                    `;
-                }
-            } catch (error) {
-                document.getElementById('storage-stats').innerHTML = '<div class="alert alert-error">加载失败</div>';
-            }
-        }
-        
-        // 加载压缩统计
-        async function loadCompressionStats() {
-            try {
-                // 模拟压缩统计数据
-                const compressionRatio = Math.random() * 40 + 40; // 40-80%压缩率
-                const spaceSaved = Math.random() * 50 + 20; // 节省空间
-                
-                document.getElementById('compression-stats').innerHTML = `
-                    <div class="stat-value">${compressionRatio.toFixed(1)}%</div>
-                    <div class="stat-label">平均压缩率</div>
-                    <div style="margin-top: 15px;">
-                        <div>节省空间: <strong>${spaceSaved.toFixed(1)} MB</strong></div>
-                        <div>压缩算法: <strong>zlib + gzip</strong></div>
-                    </div>
-                `;
-            } catch (error) {
-                document.getElementById('compression-stats').innerHTML = '<div class="alert alert-error">加载失败</div>';
-            }
-        }
-        
-        // 加载性能统计
-        async function loadPerformanceStats() {
-            try {
-                const response = await fetch(`${API_BASE}/stats/usage?days=7`);
-                const data = await response.json();
-                
-                if (data.success && data.data.length > 0) {
-                    const avgTime = data.data.reduce((sum, day) => sum + (day.avg_processing_time || 0), 0) / data.data.length;
-                    const totalRequests = data.data.reduce((sum, day) => sum + (day.total_requests || 0), 0);
-                    
-                    document.getElementById('performance-stats').innerHTML = `
-                        <div class="stat-value">${avgTime.toFixed(2)}s</div>
-                        <div class="stat-label">平均响应时间</div>
-                        <div style="margin-top: 15px;">
-                            <div>7天请求: <strong>${totalRequests}</strong></div>
-                            <div>查询优化: <strong>已启用</strong></div>
-                        </div>
-                    `;
-                } else {
-                    document.getElementById('performance-stats').innerHTML = `
-                        <div class="stat-value">0.5s</div>
-                        <div class="stat-label">平均响应时间</div>
-                        <div style="margin-top: 15px;">
-                            <div>系统状态: <strong>正常</strong></div>
-                            <div>查询优化: <strong>已启用</strong></div>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                document.getElementById('performance-stats').innerHTML = '<div class="alert alert-error">加载失败</div>';
-            }
-        }
-        
-        // 加载最近活动
-        async function loadRecentActivity() {
-            try {
-                const response = await fetch(`${API_BASE}/stats/usage?days=1`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    let activityHtml = '<div class="chart-container">';
-                    
-                    // 生成简单的活动图表
-                    for (let i = 0; i < 7; i++) {
-                        const height = Math.random() * 150 + 20;
-                        activityHtml += `<div class="chart-bar" style="height: ${height}px;" title="${i + 1}天前"></div>`;
-                    }
-                    
-                    activityHtml += '</div>';
-                    activityHtml += '<div class="stat-label">最近7天活动趋势</div>';
-                    
-                    document.getElementById('recent-activity').innerHTML = activityHtml;
-                } else {
-                    document.getElementById('recent-activity').innerHTML = '<div class="alert alert-error">暂无活动数据</div>';
-                }
-            } catch (error) {
-                document.getElementById('recent-activity').innerHTML = '<div class="alert alert-error">加载失败</div>';
-            }
-        }
-        
-        // 优化数据库
-        async function optimizeDatabase() {
-            const resultDiv = document.getElementById('operation-result');
-            resultDiv.innerHTML = '<div class="loading"></div> 正在优化数据库...';
-            
-            try {
-                const response = await fetch(`${API_BASE}/database/optimize`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    resultDiv.innerHTML = '<div class="alert alert-success">数据库优化完成！</div>';
-                    // 刷新统计数据
-                    setTimeout(loadDashboardData, 1000);
-                } else {
-                    resultDiv.innerHTML = `<div class="alert alert-error">优化失败: ${data.error}</div>`;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<div class="alert alert-error">操作失败: ${error.message}</div>`;
-            }
-        }
-        
-        // 导出数据
-        async function exportData() {
-            const resultDiv = document.getElementById('operation-result');
-            resultDiv.innerHTML = '<div class="loading"></div> 正在导出数据...';
-            
-            try {
-                const response = await fetch(`${API_BASE}/export/transcriptions?format=csv`);
-                
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'transcriptions.csv';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                    
-                    resultDiv.innerHTML = '<div class="alert alert-success">数据导出完成！</div>';
-                } else {
-                    resultDiv.innerHTML = '<div class="alert alert-error">导出失败</div>';
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<div class="alert alert-error">导出失败: ${error.message}</div>`;
-            }
-        }
-        
-        // 清理过期数据
-        async function cleanupData() {
-            if (!confirm('确定要清理30天前的过期数据吗？此操作不可撤销。')) {
-                return;
-            }
-            
-            const resultDiv = document.getElementById('operation-result');
-            resultDiv.innerHTML = '<div class="loading"></div> 正在清理过期数据...';
-            
-            try {
-                const response = await fetch(`${API_BASE}/database/cleanup`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ days: 30 })
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
-                    // 刷新统计数据
-                    setTimeout(loadDashboardData, 1000);
-                } else {
-                    resultDiv.innerHTML = `<div class="alert alert-error">清理失败: ${data.error}</div>`;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<div class="alert alert-error">操作失败: ${error.message}</div>`;
-            }
-        }
-    </script>
+ // API基础URL
+ const API_BASE = '/api';
+ 
+ // 页面加载时初始化
+ document.addEventListener('DOMContentLoaded', function() {
+ loadDashboardData();
+ // 每30秒刷新一次数据
+ setInterval(loadDashboardData, 30000);
+ });
+ 
+ // 加载仪表板数据
+ async function loadDashboardData() {
+ try {
+ await Promise.all([
+ loadDatabaseStats(),
+ loadStorageStats(),
+ loadCompressionStats(),
+ loadPerformanceStats(),
+ loadRecentActivity()
+ ]);
+ } catch (error) {
+ console.error('加载数据失败:', error);
+ }
+ }
+ 
+ // 加载数据库统计
+ async function loadDatabaseStats() {
+ try {
+ const response = await fetch(`${API_BASE}/stats/overview`);
+ const data = await response.json();
+ 
+ if (data.success) {
+ const stats = data.data.database_stats;
+ document.getElementById('db-stats').innerHTML = `
+ <div class="stat-value">${stats.total_records || 0}</div>
+ <div class="stat-label">总记录数</div>
+ <div style="margin-top: 15px;">
+ <div>音频文件: <strong>${stats.audio_files || 0}</strong></div>
+ <div>转录记录: <strong>${stats.transcriptions || 0}</strong></div>
+ <div>会议总结: <strong>${stats.summaries || 0}</strong></div>
+ </div>
+ `;
+ }
+ } catch (error) {
+ document.getElementById('db-stats').innerHTML = '<div class="alert alert-error">加载失败</div>';
+ }
+ }
+ 
+ // 加载存储统计
+ async function loadStorageStats() {
+ try {
+ const response = await fetch(`${API_BASE}/stats/overview`);
+ const data = await response.json();
+ 
+ if (data.success) {
+ const dbSize = Math.random() * 100 + 50; // 模拟数据库大小
+ const efficiency = Math.random() * 30 + 70; // 模拟存储效率
+ 
+ document.getElementById('storage-stats').innerHTML = `
+ <div class="stat-value">${dbSize.toFixed(1)} MB</div>
+ <div class="stat-label">数据库大小</div>
+ <div class="progress-bar">
+ <div class="progress-fill" style="width: ${efficiency}%"></div>
+ </div>
+ <div class="stat-label">存储效率: ${efficiency.toFixed(1)}%</div>
+ `;
+ }
+ } catch (error) {
+ document.getElementById('storage-stats').innerHTML = '<div class="alert alert-error">加载失败</div>';
+ }
+ }
+ 
+ // 加载压缩统计
+ async function loadCompressionStats() {
+ try {
+ // 模拟压缩统计数据
+ const compressionRatio = Math.random() * 40 + 40; // 40-80%压缩率
+ const spaceSaved = Math.random() * 50 + 20; // 节省空间
+ 
+ document.getElementById('compression-stats').innerHTML = `
+ <div class="stat-value">${compressionRatio.toFixed(1)}%</div>
+ <div class="stat-label">平均压缩率</div>
+ <div style="margin-top: 15px;">
+ <div>节省空间: <strong>${spaceSaved.toFixed(1)} MB</strong></div>
+ <div>压缩算法: <strong>zlib + gzip</strong></div>
+ </div>
+ `;
+ } catch (error) {
+ document.getElementById('compression-stats').innerHTML = '<div class="alert alert-error">加载失败</div>';
+ }
+ }
+ 
+ // 加载性能统计
+ async function loadPerformanceStats() {
+ try {
+ const response = await fetch(`${API_BASE}/stats/usage?days=7`);
+ const data = await response.json();
+ 
+ if (data.success && data.data.length > 0) {
+ const avgTime = data.data.reduce((sum, day) => sum + (day.avg_processing_time || 0), 0) / data.data.length;
+ const totalRequests = data.data.reduce((sum, day) => sum + (day.total_requests || 0), 0);
+ 
+ document.getElementById('performance-stats').innerHTML = `
+ <div class="stat-value">${avgTime.toFixed(2)}s</div>
+ <div class="stat-label">平均响应时间</div>
+ <div style="margin-top: 15px;">
+ <div>7天请求: <strong>${totalRequests}</strong></div>
+ <div>查询优化: <strong>已启用</strong></div>
+ </div>
+ `;
+ } else {
+ document.getElementById('performance-stats').innerHTML = `
+ <div class="stat-value">0.5s</div>
+ <div class="stat-label">平均响应时间</div>
+ <div style="margin-top: 15px;">
+ <div>系统状态: <strong>正常</strong></div>
+ <div>查询优化: <strong>已启用</strong></div>
+ </div>
+ `;
+ }
+ } catch (error) {
+ document.getElementById('performance-stats').innerHTML = '<div class="alert alert-error">加载失败</div>';
+ }
+ }
+ 
+ // 加载最近活动
+ async function loadRecentActivity() {
+ try {
+ const response = await fetch(`${API_BASE}/stats/usage?days=1`);
+ const data = await response.json();
+ 
+ if (data.success) {
+ let activityHtml = '<div class="chart-container">';
+ 
+ // 生成简单的活动图表
+ for (let i = 0; i < 7; i++) {
+ const height = Math.random() * 150 + 20;
+ activityHtml += `<div class="chart-bar" style="height: ${height}px;" title="${i + 1}天前"></div>`;
+ }
+ 
+ activityHtml += '</div>';
+ activityHtml += '<div class="stat-label">最近7天活动趋势</div>';
+ 
+ document.getElementById('recent-activity').innerHTML = activityHtml;
+ } else {
+ document.getElementById('recent-activity').innerHTML = '<div class="alert alert-error">暂无活动数据</div>';
+ }
+ } catch (error) {
+ document.getElementById('recent-activity').innerHTML = '<div class="alert alert-error">加载失败</div>';
+ }
+ }
+ 
+ // 优化数据库
+ async function optimizeDatabase() {
+ const resultDiv = document.getElementById('operation-result');
+ resultDiv.innerHTML = '<div class="loading"></div> 正在优化数据库...';
+ 
+ try {
+ const response = await fetch(`${API_BASE}/database/optimize`, {
+ method: 'POST'
+ });
+ const data = await response.json();
+ 
+ if (data.success) {
+ resultDiv.innerHTML = '<div class="alert alert-success">数据库优化完成！</div>';
+ // 刷新统计数据
+ setTimeout(loadDashboardData, 1000);
+ } else {
+ resultDiv.innerHTML = `<div class="alert alert-error">优化失败: ${data.error}</div>`;
+ }
+ } catch (error) {
+ resultDiv.innerHTML = `<div class="alert alert-error">操作失败: ${error.message}</div>`;
+ }
+ }
+ 
+ // 导出数据
+ async function exportData() {
+ const resultDiv = document.getElementById('operation-result');
+ resultDiv.innerHTML = '<div class="loading"></div> 正在导出数据...';
+ 
+ try {
+ const response = await fetch(`${API_BASE}/export/transcriptions?format=csv`);
+ 
+ if (response.ok) {
+ const blob = await response.blob();
+ const url = window.URL.createObjectURL(blob);
+ const a = document.createElement('a');
+ a.href = url;
+ a.download = 'transcriptions.csv';
+ document.body.appendChild(a);
+ a.click();
+ document.body.removeChild(a);
+ window.URL.revokeObjectURL(url);
+ 
+ resultDiv.innerHTML = '<div class="alert alert-success">数据导出完成！</div>';
+ } else {
+ resultDiv.innerHTML = '<div class="alert alert-error">导出失败</div>';
+ }
+ } catch (error) {
+ resultDiv.innerHTML = `<div class="alert alert-error">导出失败: ${error.message}</div>`;
+ }
+ }
+ 
+ // 清理过期数据
+ async function cleanupData() {
+ if (!confirm('确定要清理30天前的过期数据吗？此操作不可撤销。')) {
+ return;
+ }
+ 
+ const resultDiv = document.getElementById('operation-result');
+ resultDiv.innerHTML = '<div class="loading"></div> 正在清理过期数据...';
+ 
+ try {
+ const response = await fetch(`${API_BASE}/database/cleanup`, {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json'
+ },
+ body: JSON.stringify({ days: 30 })
+ });
+ const data = await response.json();
+ 
+ if (data.success) {
+ resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+ // 刷新统计数据
+ setTimeout(loadDashboardData, 1000);
+ } else {
+ resultDiv.innerHTML = `<div class="alert alert-error">清理失败: ${data.error}</div>`;
+ }
+ } catch (error) {
+ resultDiv.innerHTML = `<div class="alert alert-error">操作失败: ${error.message}</div>`;
+ }
+ }
+ </script>
+
+    <script src="{{ url_for('static', filename='js/icons.js') }}"></script>
+    <script>if (window.appIcons) window.appIcons.render();</script>
 </body>
 </html>

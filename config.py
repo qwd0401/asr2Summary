@@ -7,8 +7,8 @@ so the app still runs in development.
 """
 
 import os
-import secrets
 from pathlib import Path
+import secrets
 
 
 def _load_dotenv():

@@ -296,122 +296,122 @@
   <script src="{{ url_for('static', filename='js/markdown.js') }}"></script>
 
   <script>
-    (function () {
-      const grid = document.getElementById('summaryGrid');
-      const searchInput = document.getElementById('searchInput');
-      const sortSelect = document.getElementById('sortSelect');
-      const totalCount = document.getElementById('total-count');
-      const emptyState = document.getElementById('emptyState');
+ (function () {
+ const grid = document.getElementById('summaryGrid');
+ const searchInput = document.getElementById('searchInput');
+ const sortSelect = document.getElementById('sortSelect');
+ const totalCount = document.getElementById('total-count');
+ const emptyState = document.getElementById('emptyState');
 
-      const drawer = document.getElementById('previewDrawer');
-      const drawerOverlay = document.getElementById('drawerOverlay');
-      const drawerTitle = document.getElementById('drawerTitle');
-      const drawerContent = document.getElementById('drawerContent');
-      const closeDrawer = document.getElementById('closeDrawer');
+ const drawer = document.getElementById('previewDrawer');
+ const drawerOverlay = document.getElementById('drawerOverlay');
+ const drawerTitle = document.getElementById('drawerTitle');
+ const drawerContent = document.getElementById('drawerContent');
+ const closeDrawer = document.getElementById('closeDrawer');
 
-      // Cache original cards for filtering without re-fetching
-      const allCards = Array.from(grid.querySelectorAll('.summary-card'));
-      const cardData = allCards.map((card) => ({
-        el: card,
-        filename: card.dataset.filename.toLowerCase(),
-        size: parseInt((card.querySelector('.summary-card-meta').textContent.match(/[\d.]+ KB/) || ['0'])[0], 10),
-        modified: card.querySelector('.summary-card-meta').textContent.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)?.[0] || ''
-      }));
+ // Cache original cards for filtering without re-fetching
+ const allCards = Array.from(grid.querySelectorAll('.summary-card'));
+ const cardData = allCards.map((card) => ({
+ el: card,
+ filename: card.dataset.filename.toLowerCase(),
+ size: parseInt((card.querySelector('.summary-card-meta').textContent.match(/[\d.]+ KB/) || ['0'])[0], 10),
+ modified: card.querySelector('.summary-card-meta').textContent.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)?.[0] || ''
+ }));
 
-      function applyFilter() {
-        const q = searchInput.value.trim().toLowerCase();
-        const sortKey = sortSelect.value;
-        let visible = cardData.filter((c) => !q || c.filename.includes(q));
+ function applyFilter() {
+ const q = searchInput.value.trim().toLowerCase();
+ const sortKey = sortSelect.value;
+ let visible = cardData.filter((c) => !q || c.filename.includes(q));
 
-        visible.sort((a, b) => {
-          if (sortKey === 'modified_desc') return b.modified.localeCompare(a.modified);
-          if (sortKey === 'modified_asc') return a.modified.localeCompare(b.modified);
-          if (sortKey === 'name_asc') return a.filename.localeCompare(b.filename);
-          if (sortKey === 'name_desc') return b.filename.localeCompare(a.filename);
-          if (sortKey === 'size_desc') return b.size - a.size;
-          return 0;
-        });
+ visible.sort((a, b) => {
+ if (sortKey === 'modified_desc') return b.modified.localeCompare(a.modified);
+ if (sortKey === 'modified_asc') return a.modified.localeCompare(b.modified);
+ if (sortKey === 'name_asc') return a.filename.localeCompare(b.filename);
+ if (sortKey === 'name_desc') return b.filename.localeCompare(a.filename);
+ if (sortKey === 'size_desc') return b.size - a.size;
+ return 0;
+ });
 
-        // Reorder DOM and toggle visibility
-        const frag = document.createDocumentFragment();
-        visible.forEach((c) => frag.appendChild(c.el));
-        grid.appendChild(frag);
-        cardData.forEach((c) => {
-          c.el.hidden = !visible.includes(c);
-        });
+ // Reorder DOM and toggle visibility
+ const frag = document.createDocumentFragment();
+ visible.forEach((c) => frag.appendChild(c.el));
+ grid.appendChild(frag);
+ cardData.forEach((c) => {
+ c.el.hidden = !visible.includes(c);
+ });
 
-        emptyState.hidden = visible.length > 0;
-        totalCount.textContent = visible.length;
-      }
+ emptyState.hidden = visible.length > 0;
+ totalCount.textContent = visible.length;
+ }
 
-      function openDrawer(summaryId) {
-        drawerTitle.textContent = '总结 #' + summaryId;
-        drawerContent.innerHTML = '<div class="state-block"><span class="spinner"></span></div>';
-        drawer.setAttribute('data-open', 'true');
-        drawer.setAttribute('aria-hidden', 'false');
-        drawerOverlay.setAttribute('data-open', 'true');
-        drawerOverlay.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-        trapFocus(drawer);
+ function openDrawer(summaryId) {
+ drawerTitle.textContent = '总结 #' + summaryId;
+ drawerContent.innerHTML = '<div class="state-block"><span class="spinner"></span></div>';
+ drawer.setAttribute('data-open', 'true');
+ drawer.setAttribute('aria-hidden', 'false');
+ drawerOverlay.setAttribute('data-open', 'true');
+ drawerOverlay.setAttribute('aria-hidden', 'false');
+ document.body.style.overflow = 'hidden';
+ trapFocus(drawer);
 
-        fetch('/api/summaries/preview/' + summaryId)
-          .then((r) => r.json())
-          .then((data) => {
-            if (data.success) {
-              if (window.markdown) {
-                drawerContent.innerHTML = window.markdown.render(data.preview);
-              } else {
-                drawerContent.textContent = data.preview;
-              }
-              if (window.appIcons) window.appIcons.render(drawerContent);
-            } else {
-              drawerContent.innerHTML = '<div class="alert alert-error">' + (data.error || '加载失败') + '</div>';
-            }
-          })
-          .catch((e) => {
-            drawerContent.innerHTML = '<div class="alert alert-error">网络错误：' + e.message + '</div>';
-          });
-      }
+ fetch('/api/summaries/preview/' + summaryId)
+ .then((r) => r.json())
+ .then((data) => {
+ if (data.success) {
+ if (window.markdown) {
+ drawerContent.innerHTML = window.markdown.render(data.preview);
+ } else {
+ drawerContent.textContent = data.preview;
+ }
+ if (window.appIcons) window.appIcons.render(drawerContent);
+ } else {
+ drawerContent.innerHTML = '<div class="alert alert-error">' + (data.error || '加载失败') + '</div>';
+ }
+ })
+ .catch((e) => {
+ drawerContent.innerHTML = '<div class="alert alert-error">网络错误：' + e.message + '</div>';
+ });
+ }
 
-      function closeDrawerFn() {
-        drawer.setAttribute('data-open', 'false');
-        drawer.setAttribute('aria-hidden', 'true');
-        drawerOverlay.setAttribute('data-open', 'false');
-        drawerOverlay.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-      }
+ function closeDrawerFn() {
+ drawer.setAttribute('data-open', 'false');
+ drawer.setAttribute('aria-hidden', 'true');
+ drawerOverlay.setAttribute('data-open', 'false');
+ drawerOverlay.setAttribute('aria-hidden', 'true');
+ document.body.style.overflow = '';
+ }
 
-      function trapFocus(container) {
-        const focusable = container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-        if (focusable.length) focusable[0].focus();
-      }
+ function trapFocus(container) {
+ const focusable = container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+ if (focusable.length) focusable[0].focus();
+ }
 
-      // Debounced search
-      let timer;
-      searchInput.addEventListener('input', () => {
-        clearTimeout(timer);
-        timer = setTimeout(applyFilter, 150);
-      });
-      sortSelect.addEventListener('change', applyFilter);
+ // Debounced search
+ let timer;
+ searchInput.addEventListener('input', () => {
+ clearTimeout(timer);
+ timer = setTimeout(applyFilter, 150);
+ });
+ sortSelect.addEventListener('change', applyFilter);
 
-      // Preview button delegation
-      grid.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-action="preview"]');
-        if (btn) {
-          openDrawer(btn.dataset.id);
-        }
-      });
+ // Preview button delegation
+ grid.addEventListener('click', (e) => {
+ const btn = e.target.closest('[data-action="preview"]');
+ if (btn) {
+ openDrawer(btn.dataset.id);
+ }
+ });
 
-      closeDrawer.addEventListener('click', closeDrawerFn);
-      drawerOverlay.addEventListener('click', closeDrawerFn);
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && drawer.getAttribute('data-open') === 'true') {
-          closeDrawerFn();
-        }
-      });
+ closeDrawer.addEventListener('click', closeDrawerFn);
+ drawerOverlay.addEventListener('click', closeDrawerFn);
+ document.addEventListener('keydown', (e) => {
+ if (e.key === 'Escape' && drawer.getAttribute('data-open') === 'true') {
+ closeDrawerFn();
+ }
+ });
 
-      if (window.appIcons) window.appIcons.render();
-    })();
-  </script>
+ if (window.appIcons) window.appIcons.render();
+ })();
+ </script>
 </body>
 </html>

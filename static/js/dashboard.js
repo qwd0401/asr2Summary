@@ -86,9 +86,10 @@
     if (!el || typeof Chart === 'undefined') return;
 
     // 检查是否有数据
-    const hasData = totals.some(t => t > 0);
+    const hasData = totals.some((t) => t > 0);
     if (!hasData) {
-      el.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--color-text-muted);"><span data-lucide="bar-chart-3" style="margin-right:8px;"></span>暂无数据</div>';
+      el.parentElement.innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--color-text-muted);"><span data-lucide="bar-chart-3" style="margin-right:8px;"></span>暂无数据</div>';
       if (window.appIcons) window.appIcons.render();
       return;
     }
@@ -154,9 +155,10 @@
     if (!el || typeof Chart === 'undefined') return;
 
     // 检查是否有数据
-    const hasData = counts.some(c => c > 0);
+    const hasData = counts.some((c) => c > 0);
     if (!hasData) {
-      el.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--color-text-muted);"><span data-lucide="pie-chart" style="margin-right:8px;"></span>暂无数据</div>';
+      el.parentElement.innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--color-text-muted);"><span data-lucide="pie-chart" style="margin-right:8px;"></span>暂无数据</div>';
       if (window.appIcons) window.appIcons.render();
       return;
     }
