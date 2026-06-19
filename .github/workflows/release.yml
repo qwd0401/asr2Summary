@@ -1,0 +1,173 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # ============================================================
+  # Electron desktop builds (Win / Mac / Linux)
+  # ============================================================
+  build-desktop:
+    name: Desktop (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            artifact: dist-electron/*.AppImage
+          - os: macos-latest
+            platform: mac
+            artifact: dist-electron/*.dmg
+          - os: windows-latest
+            platform: win
+            artifact: dist-electron/*.exe
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Node dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build Electron app
+        run: npm run electron:build:${{ matrix.platform }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: warn
+
+  # ============================================================
+  # Docker image (GHCR)
+  # ============================================================
+  build-docker:
+    name: Docker (GHCR)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================
+  # Create GitHub Release
+  # ============================================================
+  release:
+    name: Create Release
+    needs: [build-desktop]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all desktop artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create source tarball
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          git archive --format=tar.gz --prefix="meetassistant-${TAG}/" -o "meetassistant-${TAG}-src.tar.gz" HEAD
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          PREV_TAG=$(git tag --sort=-version:refname | sed -n '2p')
+          if [ -n "$PREV_TAG" ]; then
+            CHANGES=$(git log --pretty=format:"- %s (%h)" "$PREV_TAG"..HEAD --no-merges)
+          else
+            CHANGES=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          fi
+          cat > release_notes.md << 'HEADER'
+          ## MeetAssistant ${TAG}
+
+          ### Desktop Apps
+          | Platform | File |
+          |----------|------|
+          | Windows  | `MeetAssistant-Setup-*.exe` |
+          | macOS    | `MeetAssistant-*.dmg` |
+          | Linux    | `MeetAssistant-*.AppImage` |
+
+          ### Docker
+          ```bash
+          docker pull ghcr.io/${{ github.repository }}:${TAG#v}
+          docker run -p 5000:5000 --env-file .env ghcr.io/${{ github.repository }}:${TAG#v}
+          ```
+
+          ### PWA
+          访问 Web 版本后，浏览器会提示「添加到主屏幕」即可安装为 PWA 应用。
+
+          ### Changes
+          HEADER
+          echo "$CHANGES" >> release_notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release_notes.md
+          files: |
+            artifacts/*
+            meetassistant-*-src.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

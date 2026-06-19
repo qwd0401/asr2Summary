@@ -1,16 +1,97 @@
 {
-  "name": "meetassistant-web",
+  "name": "meetassistant",
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Frontend assets for MeetAssistant (vanilla JS, no build step)",
+  "description": "AI 会议助手 - 语音转文字与智能总结",
+  "main": "electron/main.js",
   "scripts": {
     "lint": "eslint static/js",
     "lint:fix": "eslint static/js --fix",
     "format:check": "prettier --check static/js",
-    "format": "prettier --write static/js"
+    "format": "prettier --write static/js",
+    "electron:dev": "electron .",
+    "electron:build": "electron-builder --publish never",
+    "electron:build:win": "electron-builder --win --publish never",
+    "electron:build:mac": "electron-builder --mac --publish never",
+    "electron:build:linux": "electron-builder --linux --publish never"
+  },
+  "build": {
+    "appId": "com.meetassistant.app",
+    "productName": "MeetAssistant",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "static/**/*",
+      "templates/**/*",
+      "app.py",
+      "config.py",
+      "database.py",
+      "auth.py",
+      "compression_utils.py",
+      "requirements.txt",
+      "database_schema.sql",
+      ".env.example"
+    ],
+    "extraResources": [
+      {
+        "from": ".",
+        "to": "app",
+        "filter": [
+          "app.py",
+          "config.py",
+          "database.py",
+          "auth.py",
+          "compression_utils.py",
+          "requirements.txt",
+          "database_schema.sql",
+          "static/**/*",
+          "templates/**/*",
+          ".env.example"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "static/icon-512.png"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "static/icon-512.png",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "static/icon-512.png",
+      "category": "Office"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   },
   "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
     "eslint": "^9.13.0",
     "globals": "^15.11.0",
     "prettier": "^3.3.3"

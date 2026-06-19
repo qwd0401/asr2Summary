@@ -219,3 +219,6 @@ meetassistant.db-wal
 # Node
 node_modules/
 .eslintcache
+
+# Electron build output
+dist-electron/
