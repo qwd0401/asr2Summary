@@ -225,8 +225,15 @@
             <div class="upload-section" id="uploadSection">
                 <h3><i data-lucide="upload"></i> 选择音频文件</h3>
                 <p>点击选择文件或拖拽文件到此区域</p>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9em; color: #667eea;">
+                        <input type="checkbox" id="batchMode" style="cursor: pointer;">
+                        批量模式（一次上传多个文件）
+                    </label>
+                </div>
                 <input type="file" id="audioFile" class="file-input" accept=".wav,.mp3,.pcm,.opus,.webm">
-                <button class="upload-btn" onclick="document.getElementById('audioFile').click()">选择文件</button>
+                <input type="file" id="audioFiles" class="file-input" accept=".wav,.mp3,.pcm,.opus,.webm" multiple style="display: none;">
+                <button class="upload-btn" onclick="document.getElementById('batchMode').checked ? document.getElementById('audioFiles').click() : document.getElementById('audioFile').click()">选择文件</button>
                 <div class="supported-formats">
                     支持格式: WAV, MP3, PCM, OPUS, WEBM (最大100MB)
                 </div>
@@ -240,12 +247,21 @@
                         选择适合您会议类型的总结模板，以获得更精准的会议总结
                     </p>
                 </div>
+
+                <div class="llm-selection" style="margin-top: 15px; text-align: left;">
+                    <h4 style="margin-bottom: 10px;"><i data-lucide="settings"></i> 选择LLM模型</h4>
+                    <select id="llmPresetSelect" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background-color: #f8f9ff;">
+                        <option value="">加载中...</option>
+                    </select>
+                    <p style="margin-top: 8px; font-size: 0.85em; color: #666;">
+                        选择要使用的大语言模型配置，可在<a href="/unified_dashboard" style="color: #667eea;">管理面板</a>中添加和管理
+                    </p>
+                </div>
             </div>
             
             <div id="fileInfo" class="file-info" style="display: none;">
                 <h4><i data-lucide="file"></i> 已选择文件:</h4>
-                <p id="fileName"></p>
-                <p id="fileSize"></p>
+                <div id="fileList"></div>
             </div>
             
             <button id="processBtn" class="process-btn" onclick="processAudio()" disabled>
@@ -283,94 +299,135 @@
     </div>
     
     <script>
- let selectedFile = null;
+ let selectedFiles = [];
  let currentRequest = null;
  let isProcessing = false;
- 
- // 文件选择处理
- document.getElementById('audioFile').addEventListener('change', function(e) {
- const file = e.target.files[0];
- if (file) {
- handleFileSelect(file);
+
+ function isBatchMode() {
+   return document.getElementById('batchMode').checked;
  }
+
+ // 单文件选择
+ document.getElementById('audioFile').addEventListener('change', function(e) {
+   const file = e.target.files[0];
+   if (file) {
+     selectedFiles = [file];
+     renderFileList();
+   }
  });
- 
+
+ // 多文件选择
+ document.getElementById('audioFiles').addEventListener('change', function(e) {
+   const files = Array.from(e.target.files);
+   if (files.length > 0) {
+     selectedFiles = files;
+     renderFileList();
+   }
+ });
+
+ // 批量模式切换时清空选择
+ document.getElementById('batchMode').addEventListener('change', function() {
+   selectedFiles = [];
+   document.getElementById('audioFile').value = '';
+   document.getElementById('audioFiles').value = '';
+   document.getElementById('fileInfo').style.display = 'none';
+   document.getElementById('processBtn').disabled = true;
+   document.getElementById('result').style.display = 'none';
+ });
+
  // 拖拽上传
  const uploadSection = document.getElementById('uploadSection');
- 
+
  uploadSection.addEventListener('dragover', function(e) {
- e.preventDefault();
- uploadSection.classList.add('dragover');
+   e.preventDefault();
+   uploadSection.classList.add('dragover');
  });
- 
+
  uploadSection.addEventListener('dragleave', function(e) {
- e.preventDefault();
- uploadSection.classList.remove('dragover');
+   e.preventDefault();
+   uploadSection.classList.remove('dragover');
  });
- 
+
  uploadSection.addEventListener('drop', function(e) {
- e.preventDefault();
- uploadSection.classList.remove('dragover');
- 
- const files = e.dataTransfer.files;
- if (files.length > 0) {
- handleFileSelect(files[0]);
- }
+   e.preventDefault();
+   uploadSection.classList.remove('dragover');
+   const files = Array.from(e.dataTransfer.files);
+   if (files.length > 0) {
+     selectedFiles = isBatchMode() ? files : [files[0]];
+     renderFileList();
+   }
  });
- 
- function handleFileSelect(file) {
- selectedFile = file;
- 
- // 显示文件信息
- document.getElementById('fileName').textContent = file.name;
- document.getElementById('fileSize').textContent = `文件大小: ${(file.size / 1024 / 1024).toFixed(2)} MB`;
- document.getElementById('fileInfo').style.display = 'block';
- 
- // 启用处理按钮
- document.getElementById('processBtn').disabled = false;
- 
- // 重置处理状态
- if (isProcessing) {
- isProcessing = false;
- currentRequest = null;
- document.getElementById('processBtn').style.display = 'block';
- document.getElementById('cancelBtn').style.display = 'none';
+
+ function renderFileList() {
+   const fileList = document.getElementById('fileList');
+   const allowed = ['wav', 'mp3', 'pcm', 'opus', 'webm'];
+   const validFiles = selectedFiles.filter(f => {
+     const ext = f.name.includes('.') ? f.name.split('.').pop().toLowerCase() : '';
+     return allowed.includes(ext);
+   });
+
+   if (validFiles.length === 0) {
+     showError('没有有效的音频文件');
+     selectedFiles = [];
+     document.getElementById('fileInfo').style.display = 'none';
+     document.getElementById('processBtn').disabled = true;
+     return;
+   }
+
+   selectedFiles = validFiles;
+   fileList.innerHTML = selectedFiles.map((f, i) => {
+     const sizeMB = (f.size / 1024 / 1024).toFixed(2);
+     return `<p style="margin: 4px 0; font-size: 0.9em;">${i + 1}. ${f.name} <span style="color: #888;">(${sizeMB} MB)</span></p>`;
+   }).join('');
+
+   if (selectedFiles.length > 1) {
+     const totalSize = selectedFiles.reduce((s, f) => s + f.size, 0);
+     fileList.innerHTML += `<p style="margin-top: 8px; font-weight: bold; color: #667eea;">共 ${selectedFiles.length} 个文件，总计 ${(totalSize / 1024 / 1024).toFixed(2)} MB</p>`;
+   }
+
+   document.getElementById('fileInfo').style.display = 'block';
+   document.getElementById('processBtn').disabled = false;
+   document.getElementById('result').style.display = 'none';
+   document.getElementById('error').style.display = 'none';
+
+   if (isProcessing) {
+     isProcessing = false;
+     currentRequest = null;
+     document.getElementById('processBtn').style.display = 'block';
+     document.getElementById('cancelBtn').style.display = 'none';
+   }
  }
- 
- // 隐藏之前的结果
- document.getElementById('result').style.display = 'none';
- document.getElementById('error').style.display = 'none';
- }
- 
+
  // 页面加载完成后的初始化
  document.addEventListener('DOMContentLoaded', function() {
- setupDragAndDrop();
- loadTemplates();
+   setupDragAndDrop();
+   loadTemplates();
+   loadLLMPresets();
  });
- 
+
  // 设置拖放功能
  function setupDragAndDrop() {
- const uploadSection = document.getElementById('uploadSection');
- 
- uploadSection.addEventListener('dragover', function(e) {
- e.preventDefault();
- uploadSection.classList.add('dragover');
- });
- 
- uploadSection.addEventListener('dragleave', function(e) {
- e.preventDefault();
- uploadSection.classList.remove('dragover');
- });
- 
- uploadSection.addEventListener('drop', function(e) {
- e.preventDefault();
- uploadSection.classList.remove('dragover');
- 
- const files = e.dataTransfer.files;
- if (files.length > 0) {
- handleFileSelect(files[0]);
- }
- });
+   const uploadSection = document.getElementById('uploadSection');
+
+   uploadSection.addEventListener('dragover', function(e) {
+     e.preventDefault();
+     uploadSection.classList.add('dragover');
+   });
+
+   uploadSection.addEventListener('dragleave', function(e) {
+     e.preventDefault();
+     uploadSection.classList.remove('dragover');
+   });
+
+   uploadSection.addEventListener('drop', function(e) {
+     e.preventDefault();
+     uploadSection.classList.remove('dragover');
+     const files = Array.from(e.dataTransfer.files);
+     if (files.length > 0) {
+       selectedFiles = isBatchMode() ? files : [files[0]];
+       renderFileList();
+     }
+   });
  }
  
  // 加载模板列表
@@ -378,10 +435,10 @@
  try {
  const response = await fetch('/templates');
  const data = await response.json();
- 
+
  const templateSelect = document.getElementById('templateSelect');
  templateSelect.innerHTML = '';
- 
+
  if (data.success && data.templates) {
  Object.keys(data.templates).forEach(key => {
  const template = data.templates[key];
@@ -391,7 +448,7 @@
  option.title = template.description;
  templateSelect.appendChild(option);
  });
- 
+
  // 默认选择产品会议模板
  templateSelect.value = 'product';
  } else {
@@ -406,71 +463,117 @@
  templateSelect.innerHTML = '<option value="product">产品会议（默认）</option>';
  }
  }
+
+ // 加载LLM预设列表
+ async function loadLLMPresets() {
+ try {
+ const response = await fetch('/api/llm/presets');
+ const data = await response.json();
+
+ const select = document.getElementById('llmPresetSelect');
+ select.innerHTML = '';
+
+ if (data.success && data.presets) {
+ data.presets.forEach(p => {
+ const option = document.createElement('option');
+ option.value = p.id;
+ option.textContent = p.id === data.active_id ? `${p.name} (当前默认)` : p.name;
+ if (p.id === data.active_id) option.selected = true;
+ select.appendChild(option);
+ });
+ } else {
+ const option = document.createElement('option');
+ option.value = '';
+ option.textContent = '使用默认配置';
+ select.appendChild(option);
+ }
+ } catch (error) {
+ console.error('加载LLM预设失败:', error);
+ const select = document.getElementById('llmPresetSelect');
+ select.innerHTML = '<option value="">使用默认配置</option>';
+ }
+ }
  
  async function processAudio() {
- if (!selectedFile) {
- showError('请先选择音频文件');
- return;
+ if (selectedFiles.length === 0) {
+   showError('请先选择音频文件');
+   return;
  }
- 
+
  if (isProcessing) {
- showError('正在处理中，请稍候...');
- return;
+   showError('正在处理中，请稍候...');
+   return;
  }
- 
- // 设置处理状态
+
  isProcessing = true;
- 
- // 显示加载状态和取消按钮
  document.getElementById('loading').style.display = 'block';
  document.getElementById('processBtn').style.display = 'none';
  document.getElementById('cancelBtn').style.display = 'block';
  document.getElementById('result').style.display = 'none';
  document.getElementById('error').style.display = 'none';
- 
- try {
- const formData = new FormData();
- formData.append('file', selectedFile);
- 
- // 添加选中的模板参数
+
  const selectedTemplate = document.getElementById('templateSelect').value;
- formData.append('template', selectedTemplate);
- 
- // 创建可中断的请求
- const controller = new AbortController();
- currentRequest = controller;
- 
- const response = await fetch('/process', {
- method: 'POST',
- body: formData,
- signal: controller.signal
- });
- 
- const result = await response.json();
- 
- if (result.success) {
- showResult(result);
- // 自动下载zip文件
- autoDownloadZipFile(result);
- } else {
- showError(result.error || '处理失败');
- }
+ const selectedLLMPreset = document.getElementById('llmPresetSelect').value;
+
+ try {
+   const controller = new AbortController();
+   currentRequest = controller;
+
+   if (isBatchMode() && selectedFiles.length > 1) {
+     // 批量模式
+     const formData = new FormData();
+     selectedFiles.forEach(f => formData.append('files', f));
+     formData.append('template', selectedTemplate);
+     if (selectedLLMPreset) formData.append('llm_preset', selectedLLMPreset);
+
+     const response = await fetch('/process/batch', {
+       method: 'POST',
+       body: formData,
+       signal: controller.signal
+     });
+     const result = await response.json();
+
+     if (result.success) {
+       showBatchResult(result);
+     } else {
+       showError(result.error || '批量处理失败');
+     }
+   } else {
+     // 单文件模式
+     const formData = new FormData();
+     formData.append('file', selectedFiles[0]);
+     formData.append('template', selectedTemplate);
+     if (selectedLLMPreset) formData.append('llm_preset', selectedLLMPreset);
+
+     const response = await fetch('/process', {
+       method: 'POST',
+       body: formData,
+       signal: controller.signal
+     });
+     const result = await response.json();
+
+     if (result.success) {
+       showResult(result);
+       autoDownloadZipFile(result);
+     } else {
+       showError(result.error || '处理失败');
+     }
+   }
  } catch (error) {
- if (error.name === 'AbortError') {
- showError('处理已取消');
- } else {
- showError('网络错误: ' + error.message);
- }
+   if (error.name === 'AbortError') {
+     showError('处理已取消');
+   } else {
+     showError('网络错误: ' + error.message);
+   }
  } finally {
- // 重置状态
- isProcessing = false;
- currentRequest = null;
- document.getElementById('loading').style.display = 'none';
- document.getElementById('processBtn').style.display = 'block';
- document.getElementById('cancelBtn').style.display = 'none';
- document.getElementById('processBtn').disabled = false;
+   isProcessing = false;
+   currentRequest = null;
+   document.getElementById('loading').style.display = 'none';
+   document.getElementById('processBtn').style.display = 'block';
+   document.getElementById('cancelBtn').style.display = 'none';
+   document.getElementById('processBtn').disabled = false;
  }
- }
+}
  
  function cancelProcess() {
  if (currentRequest) {
@@ -574,6 +677,40 @@
  }
  
  document.getElementById('result').style.display = 'block';
+ }
+
+ function showBatchResult(result) {
+   const transcriptionDiv = document.getElementById('transcriptionResult');
+   const summaryDiv = document.getElementById('summaryResult');
+   const resultSection = document.getElementById('result');
+
+   let transHtml = `<p style="margin-bottom: 12px; font-weight: bold; color: #667eea;">共 ${result.total} 个文件：成功 ${result.succeeded} 个，失败 ${result.failed} 个</p>`;
+   let summaryHtml = '';
+
+   result.results.forEach((r, i) => {
+     const statusIcon = r.success ? '✅' : '❌';
+     transHtml += `<div style="margin-bottom: 16px; padding: 12px; background: ${r.success ? '#f0fdf4' : '#fef2f2'}; border-radius: 8px; border-left: 4px solid ${r.success ? '#22c55e' : '#ef4444'};">`;
+     transHtml += `<h4 style="margin: 0 0 8px 0;">${statusIcon} ${r.filename}</h4>`;
+     if (r.success) {
+       transHtml += `<p style="font-size: 0.9em; color: #666; margin: 0;">转录文本 (${r.transcription.length} 字)</p>`;
+       summaryHtml += `<div style="margin-bottom: 16px; padding: 12px; background: #f8f9ff; border-radius: 8px;">`;
+       summaryHtml += `<h4 style="margin: 0 0 8px 0; color: #667eea;">📄 ${r.filename}</h4>`;
+       summaryHtml += `<div style="font-size: 0.9em;">${r.summary.replace(/\n/g, '<br>')}</div>`;
+       summaryHtml += `</div>`;
+     } else {
+       transHtml += `<p style="color: #ef4444; margin: 0;">错误: ${r.error}</p>`;
+     }
+     transHtml += `</div>`;
+   });
+
+   transcriptionDiv.innerHTML = transHtml;
+   summaryDiv.innerHTML = summaryHtml || '<p>无总结内容</p>';
+
+   // 隐藏单文件下载按钮
+   document.getElementById('downloadTranscription').style.display = 'none';
+   document.getElementById('downloadSummary').style.display = 'none';
+
+   resultSection.style.display = 'block';
  }
  
  function showError(message) {

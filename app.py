@@ -11,6 +11,7 @@ import requests
 from werkzeug.utils import secure_filename
 
 import config
+import llm_manager
 
 app = Flask(__name__)
 
@@ -236,7 +237,7 @@ def create_zip_file(transcription_file, summary_file, audio_filename, timestamp=
 
 def speech_to_text(audio_file_path):
     """语音转文字功能"""
-    url = "https://api.siliconflow.cn/v1/audio/transcriptions"
+    url = config.ASR_API_URL
 
     try:
         # 检查文件是否存在
@@ -250,7 +251,7 @@ def speech_to_text(audio_file_path):
 
         with open(audio_file_path, "rb") as f:
             files = {"file": f}
-            data = {"model": "FunAudioLLM/SenseVoiceSmall"}
+            data = {"model": config.ASR_MODEL}
             headers = {"Authorization": f"Bearer {config.ASR_API_KEY}"}
 
             try:
@@ -286,9 +287,13 @@ def load_templates_config():
         return None
 
 
-def generate_meeting_summary(transcription_text, template_type="product"):
-    """生成会议总结"""
-    url = "https://api.linkapi.org/v1/chat/completions"
+def generate_meeting_summary(transcription_text, template_type="product", llm_preset_id=None):
+    """生成会议总结，支持指定LLM配置预设"""
+    # 获取LLM配置
+    llm_params = llm_manager.get_llm_params(llm_preset_id)
+    url = llm_params["api_url"]
+    if not url:
+        return {"error": "LLM API URL 未配置，请在设置中配置LLM参数"}
 
     # 加载模板配置
     templates_config = load_templates_config()
@@ -351,8 +356,9 @@ def generate_meeting_summary(transcription_text, template_type="product"):
         """
 
     payload = {
-        "model": "gemini-2.5-flash-preview-05-20",
-        "temperature": 0.2,
+        "model": llm_params["model"],
+        "temperature": llm_params["temperature"],
+        "max_tokens": llm_params["max_tokens"],
         "messages": [
             {"role": "system", "content": system_prompt},
             {
@@ -362,7 +368,10 @@ def generate_meeting_summary(transcription_text, template_type="product"):
         ],
     }
 
-    headers = {"Authorization": f"Bearer {config.LLM_API_KEY}", "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {llm_params['api_key']}", "Content-Type": "application/json"}
+    # 合并额外的自定义请求头
+    if llm_params.get("extra_headers"):
+        headers.update(llm_params["extra_headers"])
 
     try:
         logger.info(f"发送总结请求到: {url}")
@@ -507,8 +516,9 @@ def summarize_meeting():
 
     transcription_text = data["transcription"]
     template_type = data.get("template", "product")  # 默认使用产品模板
+    llm_preset_id = data.get("llm_preset")  # 可选的LLM配置预设ID
 
-    result = generate_meeting_summary(transcription_text, template_type)
+    result = generate_meeting_summary(transcription_text, template_type, llm_preset_id)
 
     if "choices" in result:
         summary_content = result["choices"][0]["message"]["content"]
@@ -571,6 +581,7 @@ def process_audio():
 
         # 获取模板参数
         template_type = request.form.get("template", "product")  # 默认使用产品模板
+        llm_preset_id = request.form.get("llm_preset")  # 可选的LLM配置预设ID
 
         # 保存上传的文件
         filename = secure_filename(file.filename)
@@ -602,7 +613,7 @@ def process_audio():
         # 步骤2: 生成会议总结
         logger.info(f"开始生成会议总结，使用模板: {template_type}")
         try:
-            summary_result = generate_meeting_summary(transcription_text, template_type)
+            summary_result = generate_meeting_summary(transcription_text, template_type, llm_preset_id)
             if "choices" not in summary_result:
                 logger.error(f"生成总结失败: {summary_result}")
                 return jsonify({"error": "生成总结失败", "details": summary_result}), 500
@@ -677,6 +688,105 @@ def process_audio():
 
     except Exception as e:
         logger.error(f"/process 接口未捕获异常: {e!s}")
+        return jsonify({"error": "服务器内部错误", "details": str(e)}), 500
+
+
+@app.route("/process/batch", methods=["POST"])
+@log_request("/process/batch")
+def process_audio_batch():
+    """批量处理：上传多个音频文件 -> 逐个转录 -> 生成总结"""
+    try:
+        files = request.files.getlist("files")
+        if not files or all(f.filename == "" for f in files):
+            return jsonify({"error": "没有上传文件"}), 400
+
+        template_type = request.form.get("template", "product")
+        llm_preset_id = request.form.get("llm_preset")
+
+        results = []
+        for file in files:
+            if file.filename == "":
+                continue
+            if not allowed_file(file.filename):
+                results.append(
+                    {
+                        "filename": file.filename,
+                        "success": False,
+                        "error": "不支持的文件格式",
+                    }
+                )
+                continue
+
+            filename = secure_filename(file.filename)
+            timestamp = datetime.datetime.now().astimezone().strftime("%Y%m%d_%H%M%S_%f")
+            saved_name = f"{timestamp}_{filename}"
+            filepath = os.path.join(app.config["UPLOAD_FOLDER"], saved_name)
+
+            try:
+                file.save(filepath)
+            except Exception as e:
+                results.append({"filename": file.filename, "success": False, "error": f"文件保存失败: {e}"})
+                continue
+
+            try:
+                transcription_result = speech_to_text(filepath)
+                if "text" not in transcription_result:
+                    results.append({"filename": file.filename, "success": False, "error": "转录失败"})
+                    continue
+                transcription_text = transcription_result["text"]
+
+                summary_result = generate_meeting_summary(transcription_text, template_type, llm_preset_id)
+                if "choices" not in summary_result:
+                    results.append({"filename": file.filename, "success": False, "error": "生成总结失败"})
+                    continue
+                summary_content = summary_result["choices"][0]["message"]["content"]
+
+                # 保存文件
+                transcription_file = f"transcription_{timestamp}.txt"
+                transcription_path = os.path.join("summaries", transcription_file)
+                with open(transcription_path, "w", encoding="utf-8") as f:
+                    f.write(transcription_text)
+
+                summary_file = generate_unique_filename()
+                templates_config = load_templates_config()
+                template_name = "会议总结"
+                if templates_config and template_type in templates_config["templates"]:
+                    template_name = templates_config["templates"][template_type]["name"] + "总结"
+
+                markdown_content = f"# {template_name}\n\n**文件来源：** {filename}\n\n{summary_content}\n"
+                with open(summary_file, "w", encoding="utf-8") as f:
+                    f.write(markdown_content)
+
+                results.append(
+                    {
+                        "filename": file.filename,
+                        "success": True,
+                        "transcription": transcription_text,
+                        "summary": summary_content,
+                        "files": {
+                            "audio": saved_name,
+                            "transcription": transcription_file,
+                            "summary": os.path.basename(summary_file),
+                        },
+                    }
+                )
+            except Exception as e:
+                logger.error(f"批量处理 {file.filename} 失败: {e}")
+                results.append({"filename": file.filename, "success": False, "error": str(e)})
+
+        success_count = sum(1 for r in results if r["success"])
+        return jsonify(
+            {
+                "success": success_count > 0,
+                "total": len(results),
+                "succeeded": success_count,
+                "failed": len(results) - success_count,
+                "results": results,
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"/process/batch 接口未捕获异常: {e}")
         return jsonify({"error": "服务器内部错误", "details": str(e)}), 500
 
 
@@ -831,6 +941,7 @@ def get_usage_stats():
 
 
 @app.route("/stats/dashboard", methods=["GET"])
+@app.route("/dashboard", methods=["GET"])
 def stats_dashboard():
     """统计数据仪表板页面（重定向到统一仪表板）"""
     return redirect("/unified_dashboard")
@@ -1016,5 +1127,144 @@ def cleanup_database():
         return jsonify({"success": False, "message": f"清理失败: {e!s}"}), 500
 
 
+@app.route("/api/llm/presets", methods=["GET"])
+def get_llm_presets():
+    """获取所有LLM配置预设列表"""
+    try:
+        presets = llm_manager.get_all_presets()
+        active_id = llm_manager.get_active_preset()["id"]
+        # 隐藏API Key的完整值，只显示前8位
+        safe_presets = []
+        for p in presets:
+            sp = dict(p)
+            if sp.get("api_key") and len(sp["api_key"]) > 8:
+                sp["api_key"] = sp["api_key"][:8] + "****"
+            safe_presets.append(sp)
+        return jsonify({"success": True, "presets": safe_presets, "active_id": active_id})
+    except Exception as e:
+        logger.error(f"获取LLM配置失败: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/llm/presets", methods=["POST"])
+def create_llm_preset():
+    """创建新的LLM配置预设"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "请提供配置数据"}), 400
+        if not data.get("api_url") or not data.get("model"):
+            return jsonify({"success": False, "error": "API URL和模型名称为必填项"}), 400
+
+        new_preset = llm_manager.add_preset(data)
+        return jsonify({"success": True, "preset": new_preset})
+    except Exception as e:
+        logger.error(f"创建LLM配置失败: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/llm/presets/<preset_id>", methods=["PUT"])
+def update_llm_preset(preset_id):
+    """更新LLM配置预设"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "请提供更新数据"}), 400
+
+        updated = llm_manager.update_preset(preset_id, data)
+        if updated:
+            return jsonify({"success": True, "preset": updated})
+        else:
+            return jsonify({"success": False, "error": "配置不存在"}), 404
+    except Exception as e:
+        logger.error(f"更新LLM配置失败: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/llm/presets/<preset_id>", methods=["DELETE"])
+def delete_llm_preset(preset_id):
+    """删除LLM配置预设"""
+    try:
+        if llm_manager.delete_preset(preset_id):
+            return jsonify({"success": True, "message": "配置已删除"})
+        else:
+            return jsonify({"success": False, "error": "无法删除该配置（默认配置不可删除）"}), 400
+    except Exception as e:
+        logger.error(f"删除LLM配置失败: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/llm/active", methods=["PUT"])
+def set_active_llm_preset():
+    """设置当前活跃的LLM配置预设"""
+    try:
+        data = request.get_json()
+        preset_id = data.get("preset_id")
+        if not preset_id:
+            return jsonify({"success": False, "error": "请提供preset_id"}), 400
+
+        if llm_manager.set_active_preset(preset_id):
+            return jsonify({"success": True, "message": "已切换活跃配置"})
+        else:
+            return jsonify({"success": False, "error": "配置不存在"}), 404
+    except Exception as e:
+        logger.error(f"设置活跃LLM配置失败: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/llm/active", methods=["GET"])
+def get_active_llm_preset():
+    """获取当前活跃的LLM配置"""
+    try:
+        preset = llm_manager.get_active_preset()
+        sp = dict(preset)
+        if sp.get("api_key") and len(sp["api_key"]) > 8:
+            sp["api_key"] = sp["api_key"][:8] + "****"
+        return jsonify({"success": True, "preset": sp})
+    except Exception as e:
+        logger.error(f"获取活跃LLM配置失败: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/llm/test", methods=["POST"])
+def test_llm_connection():
+    """测试LLM连接"""
+    try:
+        data = request.get_json()
+        preset_id = data.get("preset_id")
+        llm_params = llm_manager.get_llm_params(preset_id)
+
+        if not llm_params["api_url"]:
+            return jsonify({"success": False, "error": "API URL 未配置"}), 400
+
+        # 发送一个简单的测试请求
+        test_payload = {
+            "model": llm_params["model"],
+            "temperature": 0.1,
+            "max_tokens": 50,
+            "messages": [{"role": "user", "content": "Hello, respond with 'OK' only."}],
+        }
+        headers = {"Authorization": f"Bearer {llm_params['api_key']}", "Content-Type": "application/json"}
+        if llm_params.get("extra_headers"):
+            headers.update(llm_params["extra_headers"])
+
+        response = requests.post(llm_params["api_url"], json=test_payload, headers=headers, timeout=30)
+        response.raise_for_status()
+        result = response.json()
+
+        if "choices" in result:
+            reply = result["choices"][0]["message"]["content"]
+            return jsonify({"success": True, "message": "连接成功", "model": llm_params["model"], "reply": reply})
+        else:
+            return jsonify({"success": False, "error": "响应格式异常", "details": result}), 500
+    except requests.exceptions.Timeout:
+        return jsonify({"success": False, "error": "连接超时"}), 500
+    except requests.exceptions.HTTPError as e:
+        return jsonify({"success": False, "error": f"HTTP错误: {e}"}), 500
+    except Exception as e:
+        logger.error(f"测试LLM连接失败: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host=config.HOST, port=config.PORT)
