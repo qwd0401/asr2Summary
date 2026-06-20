@@ -22,13 +22,10 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
-            artifact: dist-electron/*.AppImage
           - os: macos-latest
             platform: mac
-            artifact: dist-electron/*.dmg
           - os: windows-latest
             platform: win
-            artifact: dist-electron/*.exe
 
     steps:
       - name: Checkout
@@ -55,12 +52,20 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: List build output
+        run: ls -la dist-electron/ || dir dist-electron
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-${{ matrix.platform }}
-          path: ${{ matrix.artifact }}
+          name: release-${{ matrix.platform }}
+          path: |
+            dist-electron/*.exe
+            dist-electron/*.dmg
+            dist-electron/*.AppImage
+            dist-electron/*.dmg.blockmap
           if-no-files-found: warn
+          retention-days: 5
 
   # ============================================================
   # Docker image (GHCR)
@@ -109,64 +114,46 @@ jobs:
   # ============================================================
   release:
     name: Create Release
-    needs: [build-desktop]
+    needs: [build-desktop, build-docker]
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Download all desktop artifacts
+      - name: Download Linux artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          merge-multiple: true
+          name: release-linux
+          path: release-files
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-mac
+          path: release-files
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-win
+          path: release-files
+
+      - name: List release files
+        run: ls -la release-files/
 
       - name: Create source tarball
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          git archive --format=tar.gz --prefix="meetassistant-${TAG}/" -o "meetassistant-${TAG}-src.tar.gz" HEAD
-
-      - name: Generate release notes
-        id: notes
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          PREV_TAG=$(git tag --sort=-version:refname | sed -n '2p')
-          if [ -n "$PREV_TAG" ]; then
-            CHANGES=$(git log --pretty=format:"- %s (%h)" "$PREV_TAG"..HEAD --no-merges)
-          else
-            CHANGES=$(git log --pretty=format:"- %s (%h)" --no-merges)
-          fi
-          cat > release_notes.md << 'HEADER'
-          ## MeetAssistant ${TAG}
-
-          ### Desktop Apps
-          | Platform | File |
-          |----------|------|
-          | Windows  | `MeetAssistant-Setup-*.exe` |
-          | macOS    | `MeetAssistant-*.dmg` |
-          | Linux    | `MeetAssistant-*.AppImage` |
-
-          ### Docker
-          ```bash
-          docker pull ghcr.io/${{ github.repository }}:${TAG#v}
-          docker run -p 5000:5000 --env-file .env ghcr.io/${{ github.repository }}:${TAG#v}
-          ```
-
-          ### PWA
-          访问 Web 版本后，浏览器会提示「添加到主屏幕」即可安装为 PWA 应用。
-
-          ### Changes
-          HEADER
-          echo "$CHANGES" >> release_notes.md
+          git archive --format=tar.gz --prefix="meetassistant-${TAG}/" -o "release-files/meetassistant-${TAG}-src.tar.gz" HEAD
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          body_path: release_notes.md
-          files: |
-            artifacts/*
-            meetassistant-*-src.tar.gz
+          files: release-files/*
+          generate_release_notes: true
           draft: false
           prerelease: false
         env:
